@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MaxEng Wallet Signing</title>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 20px;">
+  <h2>Connect Your TON Wallet</h2>
+  <div id="ton-connect"></div>
+  <button id="signBtn" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Sign $2 TON Transaction</button>
+
+  <script>
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+      buttonRootId: 'ton-connect'
+    });
+
+    document.getElementById('signBtn').addEventListener('click', async () => {
+      const connectedWallet = await tonConnectUI.walletInfo();
+      if (!connectedWallet) {
+        alert('Please connect your wallet first!');
+        return;
+      }
+
+      try {
+        await tonConnectUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 360,
+          messages: [{
+            address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amount: (2 * 1e9 / 0.5).toFixed(0),
+          }],
+        });
+
+        alert('Transaction request sent to your wallet!');
+
+        fetch('https://YOUR_SERVER_URL/ton-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: connectedWallet.account.address,
+            amount: 2,
+            status: 'signed',
+            timestamp: Date.now()
+          })
+        }).then(() => console.log('Webhook sent!'))
+        .catch(err => console.error('Webhook error:', err));
+
+      } catch (err) {
+        alert('Transaction failed: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
