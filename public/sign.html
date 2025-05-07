@@ -13,35 +13,42 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: #f8f8f8;
+      background: linear-gradient(135deg, #141E30, #243B55);
+      color: #fff;
     }
     .container {
       text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      width: 300px;
     }
     h2 {
-      font-size: 28px;
-      margin-bottom: 30px;
-      color: #000;
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #00c6ff;
     }
     button, #ton-connect button {
-      padding: 12px 24px;
+      width: 100%;
+      padding: 12px;
       margin: 10px 0;
       font-size: 16px;
-      border: 2px solid #000;
-      background: #fff;
-      cursor: pointer;
+      border: none;
       border-radius: 8px;
-      width: 250px;
-      transition: background 0.3s, color 0.3s;
+      cursor: pointer;
+      transition: background 0.3s;
     }
-    button:hover, #ton-connect button:hover {
-      background: #000;
+    button {
+      background: #00c6ff;
       color: #fff;
     }
-    #livePrice {
+    button:hover {
+      background: #0072ff;
+    }
+    #message {
       margin-top: 10px;
       font-size: 14px;
-      color: #333;
     }
   </style>
 </head>
@@ -50,7 +57,7 @@
     <h2>Connect Your TON Wallet</h2>
     <div id="ton-connect"></div>
     <button id="signBtn">Sign $2 TON Transaction</button>
-    <div id="livePrice">Fetching live TON price...</div>
+    <div id="message">Fetching live TON price...</div>
   </div>
 
   <script>
@@ -59,56 +66,57 @@
       buttonRootId: 'ton-connect'
     });
 
+    const messageEl = document.getElementById('message');
+    let tonPrice = null;
+
     async function getTonPriceUSD() {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd');
-        const data = await response.json();
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd');
+        const data = await res.json();
         return data.toncoin.usd;
       } catch (err) {
-        console.error('Error fetching TON price:', err);
+        console.error('Failed to fetch TON price:', err);
         return null;
       }
     }
 
-    async function updateLivePriceDisplay() {
-      const price = await getTonPriceUSD();
-      const livePriceEl = document.getElementById('livePrice');
-      if (price) {
-        const tonAmount = (2 / price).toFixed(4);
-        livePriceEl.textContent = Live TON price: $${price} → ≈ ${tonAmount} TON for $2;
+    async function updatePrice() {
+      tonPrice = await getTonPriceUSD();
+      if (tonPrice) {
+        const tonAmount = (2 / tonPrice).toFixed(4);
+        messageEl.textContent = Live price: $${tonPrice} → ~${tonAmount} TON for $2;
       } else {
-        livePriceEl.textContent = 'Failed to load live TON price.';
+        messageEl.textContent = 'Failed to load live price. Please refresh.';
       }
     }
 
-    updateLivePriceDisplay();
+    updatePrice();
 
     document.getElementById('signBtn').addEventListener('click', async () => {
-      const connectedWallet = await tonConnectUI.walletInfo();
-      if (!connectedWallet) {
-        alert('Please connect your wallet first!');
+      const walletInfo = await tonConnectUI.walletInfo();
+      if (!walletInfo) {
+        messageEl.textContent = '⚠ Please connect your wallet first.';
+        return;
+      }
+      if (!tonPrice) {
+        messageEl.textContent = '⚠ Live price unavailable. Please refresh.';
         return;
       }
 
-      const price = await getTonPriceUSD();
-      if (!price) {
-        alert('Failed to fetch live price. Please try again later.');
-        return;
-      }
-
-      const tonAmount = (2 / price) * 1e9; // convert to nanoton
+      const amountNano = (2 / tonPrice * 1e9).toFixed(0);
 
       try {
         await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 360,
           messages: [{
             address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-            amount: tonAmount.toFixed(0)
+            amount: amountNano
           }],
         });
-        alert('Transaction request sent to your wallet!');
+        messageEl.textContent = '✅ Transaction request sent to your wallet!';
       } catch (err) {
-        alert('Transaction failed: ' + err.message);
+        console.error(err);
+        messageEl.textContent = '❌ Transaction failed or cancelled.';
       }
     });
   </script>
