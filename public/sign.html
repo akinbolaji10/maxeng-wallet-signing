@@ -22,7 +22,7 @@
       padding: 30px;
       border-radius: 15px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      width: 300px;
+      width: 320px;
     }
     h2 {
       margin-bottom: 20px;
@@ -86,7 +86,7 @@
         const tonAmount = (2 / tonPrice).toFixed(4);
         messageEl.textContent = Live price: $${tonPrice} → ~${tonAmount} TON for $2;
       } else {
-        messageEl.textContent = 'Failed to load live price. Please refresh.';
+        messageEl.textContent = '⚠ Failed to load live price. Please refresh or check internet.';
       }
     }
 
