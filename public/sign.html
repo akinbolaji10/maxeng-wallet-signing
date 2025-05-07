@@ -38,6 +38,11 @@
       background: #000;
       color: #fff;
     }
+    #livePrice {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -45,7 +50,7 @@
     <h2>Connect Your TON Wallet</h2>
     <div id="ton-connect"></div>
     <button id="signBtn">Sign $2 TON Transaction</button>
-    <p id="livePrice" style="margin-top: 10px; color: #333;"></p>
+    <div id="livePrice">Fetching live TON price...</div>
   </div>
 
   <script>
@@ -65,18 +70,18 @@
       }
     }
 
-    async function updateLivePrice() {
+    async function updateLivePriceDisplay() {
       const price = await getTonPriceUSD();
-      const livePriceElement = document.getElementById('livePrice');
+      const livePriceEl = document.getElementById('livePrice');
       if (price) {
         const tonAmount = (2 / price).toFixed(4);
-        livePriceElement.textContent = Live TON price: $${price} → ~${tonAmount} TON for $2;
+        livePriceEl.textContent = Live TON price: $${price} → ≈ ${tonAmount} TON for $2;
       } else {
-        livePriceElement.textContent = 'Failed to load live TON price.';
+        livePriceEl.textContent = 'Failed to load live TON price.';
       }
     }
 
-    updateLivePrice();
+    updateLivePriceDisplay();
 
     document.getElementById('signBtn').addEventListener('click', async () => {
       const connectedWallet = await tonConnectUI.walletInfo();
