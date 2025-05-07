@@ -5,17 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f8f8f8;
+    }
+    .container {
+      text-align: center;
+    }
+    h2 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #000;
+    }
+    button, #ton-connect button {
+      padding: 12px 24px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 2px solid #000;
+      background: #fff;
+      cursor: pointer;
+      border-radius: 8px;
+      width: 250px;
+      transition: background 0.3s, color 0.3s;
+    }
+    button:hover, #ton-connect button:hover {
+      background: #000;
+      color: #fff;
+    }
+  </style>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 20px;">
-  <h2>Connect Your TON Wallet</h2>
-  <div id="ton-connect"></div>
-  <button id="signBtn" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">Sign $2 TON Transaction</button>
+<body>
+  <div class="container">
+    <h2>Connect Your TON Wallet</h2>
+    <div id="ton-connect"></div>
+    <button id="signBtn">Sign $2 TON Transaction</button>
+    <p id="livePrice" style="margin-top: 10px; color: #333;"></p>
+  </div>
 
   <script>
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: window.location.origin + '/tonconnect-manifest.json',
       buttonRootId: 'ton-connect'
     });
+
+    async function getTonPriceUSD() {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd');
+        const data = await response.json();
+        return data.toncoin.usd;
+      } catch (err) {
+        console.error('Error fetching TON price:', err);
+        return null;
+      }
+    }
+
+    async function updateLivePrice() {
+      const price = await getTonPriceUSD();
+      const livePriceElement = document.getElementById('livePrice');
+      if (price) {
+        const tonAmount = (2 / price).toFixed(4);
+        livePriceElement.textContent = Live TON price: $${price} → ~${tonAmount} TON for $2;
+      } else {
+        livePriceElement.textContent = 'Failed to load live TON price.';
+      }
+    }
+
+    updateLivePrice();
 
     document.getElementById('signBtn').addEventListener('click', async () => {
       const connectedWallet = await tonConnectUI.walletInfo();
@@ -24,29 +85,23 @@
         return;
       }
 
+      const price = await getTonPriceUSD();
+      if (!price) {
+        alert('Failed to fetch live price. Please try again later.');
+        return;
+      }
+
+      const tonAmount = (2 / price) * 1e9; // convert to nanoton
+
       try {
         await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 360,
           messages: [{
             address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-            amount: (2 * 1e9 / 0.5).toFixed(0),
+            amount: tonAmount.toFixed(0)
           }],
         });
-
         alert('Transaction request sent to your wallet!');
-
-        fetch('https://YOUR_SERVER_URL/ton-webhook', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            address: connectedWallet.account.address,
-            amount: 2,
-            status: 'signed',
-            timestamp: Date.now()
-          })
-        }).then(() => console.log('Webhook sent!'))
-        .catch(err => console.error('Webhook error:', err));
-
       } catch (err) {
         alert('Transaction failed: ' + err.message);
       }
