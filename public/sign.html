@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <style>
@@ -84,7 +84,7 @@
       tonPrice = await getTonPriceUSD();
       if (tonPrice) {
         const tonAmount = (2 / tonPrice).toFixed(4);
-        messageEl.textContent = Live price: $${tonPrice} → ~${tonAmount} TON for $2;
+        messageEl.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
       } else {
         messageEl.textContent = '⚠ Failed to load live price. Please refresh or check internet.';
       }
