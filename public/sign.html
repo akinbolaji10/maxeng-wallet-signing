@@ -21,7 +21,7 @@
       background: rgba(255, 255, 255, 0.1);
       padding: 30px;
       border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       width: 320px;
     }
     h2 {
@@ -72,7 +72,15 @@
     async function getTonPriceUSD() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd');
+        console.log('Fetch response:', res);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
+        console.log('Fetched data:', data);
+        if (!data || !data.toncoin || !data.toncoin.usd) {
+          throw new Error('Invalid data structure received from CoinGecko.');
+        }
         return data.toncoin.usd;
       } catch (err) {
         console.error('Failed to fetch TON price:', err);
@@ -86,7 +94,7 @@
         const tonAmount = (2 / tonPrice).toFixed(4);
         messageEl.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
       } else {
-        messageEl.textContent = '⚠ Failed to load live price. Please refresh or check internet.';
+        messageEl.textContent = '⚠ Failed to load live price. Please refresh or check your internet connection.';
       }
     }
 
@@ -102,9 +110,8 @@
         messageEl.textContent = '⚠ Live price unavailable. Please refresh.';
         return;
       }
-
+      // Calculate the amount in nanotons (1 TON = 1e9 nanotons)
       const amountNano = (2 / tonPrice * 1e9).toFixed(0);
-
       try {
         await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 360,
