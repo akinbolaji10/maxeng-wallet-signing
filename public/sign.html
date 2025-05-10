@@ -9,57 +9,49 @@
     body {
       font-family: Arial, sans-serif;
       display: flex;
+      flex-direction: column; /* Stack elements vertically */
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #141E30, #243B55);
-      color: #fff;
-    }
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      width: 320px;
+      background: linear-gradient(135deg, #ffffff, #e6f0fa); /* Light gradient */
+      color: #000; /* Black text */
     }
     h2 {
       margin-bottom: 20px;
-      font-size: 24px;
-      color: #00c6ff;
+      font-size: 36px; /* Larger font to match image */
+      font-weight: bold;
       text-align: center;
     }
     button, #ton-connect button {
-      width: 100%;
-      padding: 12px;
+      width: 250px; /* Fixed width to match image */
+      padding: 10px;
       margin: 10px 0;
       font-size: 16px;
-      border: none;
+      border: 2px solid #000; /* Black border */
       border-radius: 8px;
+      background: none; /* No background color */
+      color: #000; /* Black text */
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: background 0.3s;
     }
-    button {
-      background: #00c6ff;
-      color: #fff;
+    #ton-connect button::before {
+      content: '▶'; /* Play icon */
+      margin-right: 10px;
+      font-size: 16px;
     }
-    button:hover {
-      background: #0072ff;
-    }
-    #message {
-      margin-top: 10px;
-      font-size: 14px;
+    button:hover, #ton-connect button:hover {
+      background: #f0f0f0; /* Light gray on hover */
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Connect Your TON Wallet</h2>
-    <div id="ton-connect"></div>
-    <button id="signBtn">Sign $2 TON Transaction</button>
-    <div id="message">Fetching live TON price...</div>
-  </div>
+  <h2>Connect Your TON Wallet</h2>
+  <div id="ton-connect"></div>
+  <button id="signBtn">Sign $2 TON Transaction</button>
 
   <script>
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -67,7 +59,6 @@
       buttonRootId: 'ton-connect'
     });
 
-    const messageEl = document.getElementById('message');
     let tonPrice = null;
 
     async function getTonPriceUSD() {
@@ -93,9 +84,9 @@
       tonPrice = await getTonPriceUSD();
       if (tonPrice) {
         const tonAmount = (2 / tonPrice).toFixed(4);
-        messageEl.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
+        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`); // Log to console since message div is removed
       } else {
-        messageEl.textContent = '⚠ Failed to load live price. Please refresh or check your internet connection.';
+        console.log('⚠ Failed to load live price. Please refresh or check your internet connection.');
       }
     }
 
@@ -104,14 +95,13 @@
     document.getElementById('signBtn').addEventListener('click', async () => {
       const walletInfo = await tonConnectUI.walletInfo();
       if (!walletInfo) {
-        messageEl.textContent = '⚠ Please connect your wallet first.';
+        console.log('⚠ Please connect your wallet first.'); // Log to console
         return;
       }
       if (!tonPrice) {
-        messageEl.textContent = '⚠ Live price unavailable. Please refresh.';
+        console.log('⚠ Live price unavailable. Please refresh.');
         return;
       }
-      // Calculate the amount in nanotons (1 TON = 1e9 nanotons)
       const amountNano = (2 / tonPrice * 1e9).toFixed(0);
       try {
         await tonConnectUI.sendTransaction({
@@ -121,10 +111,10 @@
             amount: amountNano
           }],
         });
-        messageEl.textContent = '✅ Transaction request sent to your wallet!';
+        console.log('✅ Transaction request sent to your wallet!');
       } catch (err) {
         console.error(err);
-        messageEl.textContent = '❌ Transaction failed or cancelled.';
+        console.log('❌ Transaction failed or cancelled.');
       }
     });
   </script>
