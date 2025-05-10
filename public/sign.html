@@ -59,7 +59,7 @@
 </head>
 <body>
   <h2>Connect Your TON Wallet</h2>
-  <div id="ton-connect"></div>
+  <div id="ton-connect"></div> <!-- Reintroduced for the "Connect Wallet" button -->
   <button id="signBtn">Sign $2 TON Transaction</button>
 
   <script>
@@ -123,4 +123,17 @@
         console.log('✅ Transaction request sent to your wallet!');
       } catch (err) {
         console.error(err);
-        console.log('
+        console.log('❌ Transaction failed or cancelled.');
+      }
+    });
+
+    // Ensure the TON Connect button text is set to "Connect Wallet" and text is black
+    document.addEventListener('DOMContentLoaded', () => {
+      const tonConnectButton = document.querySelector('#ton-connect button');
+      if (tonConnectButton) {
+        tonConnectButton.innerHTML = '<span style="color: #000 !important;">Connect Wallet</span>';
+      }
+    });
+  </script>
+</body>
+</html>
