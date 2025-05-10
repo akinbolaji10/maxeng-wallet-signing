@@ -38,10 +38,17 @@
       justify-content: center;
       transition: background 0.3s;
     }
+    #ton-connect button {
+      position: relative; /* Ensure positioning for pseudo-element */
+    }
     #ton-connect button::before {
       content: '▶'; /* Play icon */
       margin-right: 10px;
       font-size: 16px;
+    }
+    #ton-connect button span {
+      display: inline-block; /* Ensure text is visible */
+      color: #000; /* Black text */
     }
     button:hover, #ton-connect button:hover {
       background: #f0f0f0; /* Light gray on hover */
@@ -84,7 +91,7 @@
       tonPrice = await getTonPriceUSD();
       if (tonPrice) {
         const tonAmount = (2 / tonPrice).toFixed(4);
-        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`); // Log to console since message div is removed
+        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`);
       } else {
         console.log('⚠ Failed to load live price. Please refresh or check your internet connection.');
       }
@@ -93,9 +100,9 @@
     updatePrice();
 
     document.getElementById('signBtn').addEventListener('click', async () => {
-      const walletInfo = await tonConnectUI.walletInfo();
+      const walletInfo = await tonConnectUI.getWallet();
       if (!walletInfo) {
-        console.log('⚠ Please connect your wallet first.'); // Log to console
+        console.log('⚠ Please connect your wallet first.');
         return;
       }
       if (!tonPrice) {
@@ -115,6 +122,14 @@
       } catch (err) {
         console.error(err);
         console.log('❌ Transaction failed or cancelled.');
+      }
+    });
+
+    // Ensure the TON Connect button text is set to "Connect Wallet"
+    document.addEventListener('DOMContentLoaded', () => {
+      const tonConnectButton = document.querySelector('#ton-connect button');
+      if (tonConnectButton) {
+        tonConnectButton.innerHTML = '<span>Connect Wallet</span>';
       }
     });
   </script>
