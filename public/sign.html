@@ -80,11 +80,171 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
 
   <script>
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: window.location.origin + '/tonconnect-manifest.json'
-    });
+    // Initialize TON Connect UI
+    let tonConnectUI;
+    try {
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+      });
+      console.log('TON Connect UI initialized successfully');
+    } catch (err) {
+      console.error('Failed to initialize TON Connect UI:', err);
+      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+    }
 
     let tonPrice = null;
     const connectWalletBtn = document.getElementById('connectWalletBtn');
     const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
-    const
+    const walletInfoDiv = document.getElementById('walletInfo');
+    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+
+    // Function to truncate wallet address for display (e.g., UQBP...50bN)
+    function truncateAddress(address) {
+      if (!address) return '';
+      return `${address.slice(0, 4)}...${address.slice(-4)}`;
+    }
+
+    // Function to update UI based on wallet connection status
+    function updateWalletUI(wallet) {
+      if (wallet) {
+        const address = wallet.account?.address || 'Unknown Address';
+        walletInfoDiv.textContent = `Connected: ${truncateAddress(address)}`;
+        walletInfoDiv.classList.remove('hidden');
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+      } else {
+        walletInfoDiv.textContent = '';
+        walletInfoDiv.classList.add('hidden');
+        connectWalletBtn.classList.remove('hidden');
+        disconnectWalletBtn.classList.add('hidden');
+      }
+    }
+
+    // Set up wallet status listener and initial check
+    if (tonConnectUI) {
+      tonConnectUI.onStatusChange((wallet) => {
+        console.log('Wallet status changed:', wallet);
+        updateWalletUI(wallet);
+      });
+
+      // Initial check for already connected wallet
+      (async () => {
+        try {
+          const wallet = await tonConnectUI.getWallet();
+          console.log('Initial wallet check:', wallet);
+          updateWalletUI(wallet);
+        } catch (err) {
+          console.error('Error checking initial wallet status:', err);
+        }
+      })();
+    }
+
+    // Connect Wallet button click
+    connectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        console.error('TON Connect UI not initialized');
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
+      try {
+        connectWalletBtn.disabled = true; // Disable button during connection
+        connectWalletBtn.textContent = 'Connecting...';
+        await tonConnectUI.connectWallet();
+        console.log('✅ Wallet connected successfully!');
+      } catch (err) {
+        console.error('Wallet connection error:', err);
+        alert('❌ Wallet connection failed or was cancelled.');
+      } finally {
+        connectWalletBtn.disabled = false;
+        connectWalletBtn.textContent = 'Connect Wallet';
+      }
+    });
+
+    // Disconnect Wallet button click
+    disconnectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        console.error('TON Connect UI not initialized');
+        return;
+      }
+      try {
+        await tonConnectUI.disconnect();
+        console.log('✅ Wallet disconnected successfully!');
+      } catch (err) {
+        console.error('Disconnect error:', err);
+        alert('❌ Failed to disconnect wallet.');
+      }
+    });
+
+    async function getTonPriceUSD() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd', {
+          mode: 'cors', // Ensure CORS is enabled
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        console.log('Fetch response:', res);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+        console.log('Fetched data:', data);
+        if (!data || !data.toncoin || !data.toncoin.usd) {
+          throw new Error('Invalid data structure received from CoinGecko.');
+        }
+        return data.toncoin.usd;
+      } catch (err) {
+        console.error('Failed to fetch TON price:', err);
+        return null;
+      }
+    }
+
+    async function updatePrice() {
+      tonPriceDisplay.textContent = 'Fetching TON price...'; // Reset display
+      const price = await getTonPriceUSD();
+      if (price) {
+        tonPrice = price;
+        const tonAmount = (2 / tonPrice).toFixed(4);
+        tonPriceDisplay.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
+        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`);
+      } else {
+        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
+        console.log('⚠ Failed to load live price. Please refresh or check your internet connection.');
+      }
+    }
+
+    // Call updatePrice immediately
+    updatePrice();
+
+    document.getElementById('signBtn').addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        console.error('TON Connect UI not initialized');
+        return;
+      }
+      const walletInfo = await tonConnectUI.getWallet();
+      if (!walletInfo) {
+        console.log('⚠ Please connect your wallet first.');
+        return;
+      }
+      if (!tonPrice) {
+        console.log('⚠ Live price unavailable. Please refresh.');
+        return;
+      }
+      const amountNano = (2 / tonPrice * 1e9).toFixed(0);
+      try {
+        await tonConnectUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 360,
+          messages: [{
+            address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amount: amountNano
+          }],
+        });
+        console.log('✅ Transaction request sent to your wallet!');
+      } catch (err) {
+        console.error('Transaction error:', err);
+        console.log('❌ Transaction failed or cancelled.');
+      }
+    });
+  </script>
+</body>
+</html>
