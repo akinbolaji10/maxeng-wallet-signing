@@ -9,66 +9,131 @@
     body {
       font-family: Arial, sans-serif;
       display: flex;
+      flex-direction: column; /* Stack elements vertically */
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #141E30, #243B55);
-      color: #fff;
-    }
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      width: 320px;
+      background: linear-gradient(135deg, #ffffff, #e6f0fa); /* Light gradient */
+      color: #000; /* Black text for body */
     }
     h2 {
       margin-bottom: 20px;
-      font-size: 24px;
-      color: #00c6ff;
+      font-size: 36px; /* Larger font to match image */
+      font-weight: bold;
       text-align: center;
-    }
-    button, #ton-connect button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
+      color: #000; /* Explicitly black */
     }
     button {
-      background: #00c6ff;
-      color: #fff;
+      width: 250px; /* Fixed width to match image */
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      font-weight: bold; /* Bold text for buttons */
+      border: 2px solid #000; /* Black border */
+      border-radius: 8px;
+      background: none; /* No background color */
+      color: #000; /* Black text */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    #connectWalletBtn::before {
+      content: '▶'; /* Play icon */
+      margin-right: 10px;
+      font-size: 16px;
+      color: #000; /* Black play icon */
     }
     button:hover {
-      background: #0072ff;
+      background: #f0f0f0; /* Light gray on hover */
     }
-    #message {
-      margin-top: 10px;
+    #walletInfo {
+      margin: 10px 0;
       font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      word-break: break-all; /* Ensure long wallet addresses wrap */
+      text-align: center;
+      max-width: 250px; /* Match button width */
+    }
+    .hidden {
+      display: none; /* Class to hide elements */
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Connect Your TON Wallet</h2>
-    <div id="ton-connect"></div>
-    <button id="signBtn">Sign $2 TON Transaction</button>
-    <div id="message">Fetching live TON price...</div>
-  </div>
+  <h2>Connect Your TON Wallet</h2>
+  <button id="connectWalletBtn">Connect Wallet</button>
+  <div id="walletInfo" class="hidden"></div> <!-- Display wallet address -->
+  <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button> <!-- Disconnect button -->
+  <button id="signBtn">Sign $2 TON Transaction</button>
 
   <script>
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: window.location.origin + '/tonconnect-manifest.json',
-      buttonRootId: 'ton-connect'
+      manifestUrl: window.location.origin + '/tonconnect-manifest.json'
     });
 
-    const messageEl = document.getElementById('message');
     let tonPrice = null;
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+    const walletInfoDiv = document.getElementById('walletInfo');
+
+    // Function to truncate wallet address for display (e.g., UQBP...50bN)
+    function truncateAddress(address) {
+      if (!address) return '';
+      return `${address.slice(0, 4)}...${address.slice(-4)}`;
+    }
+
+    // Function to update UI based on wallet connection status
+    function updateWalletUI(wallet) {
+      if (wallet) {
+        const address = wallet.account?.address || 'Unknown Address';
+        walletInfoDiv.textContent = `Connected: ${truncateAddress(address)}`;
+        walletInfoDiv.classList.remove('hidden');
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+      } else {
+        walletInfoDiv.textContent = '';
+        walletInfoDiv.classList.add('hidden');
+        connectWalletBtn.classList.remove('hidden');
+        disconnectWalletBtn.classList.add('hidden');
+      }
+    }
+
+    // Check initial wallet status and listen for changes
+    tonConnectUI.onStatusChange((wallet) => {
+      updateWalletUI(wallet);
+    });
+
+    // Initial check for already connected wallet
+    (async () => {
+      const wallet = await tonConnectUI.getWallet();
+      updateWalletUI(wallet);
+    })();
+
+    // Connect Wallet button click
+    connectWalletBtn.addEventListener('click', async () => {
+      try {
+        await tonConnectUI.connectWallet();
+        console.log('✅ Wallet connected successfully!');
+      } catch (err) {
+        console.error(err);
+        console.log('❌ Wallet connection failed or was cancelled.');
+      }
+    });
+
+    // Disconnect Wallet button click
+    disconnectWalletBtn.addEventListener('click', async () => {
+      try {
+        await tonConnectUI.disconnect();
+        console.log('✅ Wallet disconnected successfully!');
+      } catch (err) {
+        console.error(err);
+        console.log('❌ Failed to disconnect wallet.');
+      }
+    });
 
     async function getTonPriceUSD() {
       try {
@@ -93,25 +158,24 @@
       tonPrice = await getTonPriceUSD();
       if (tonPrice) {
         const tonAmount = (2 / tonPrice).toFixed(4);
-        messageEl.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
+        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`);
       } else {
-        messageEl.textContent = '⚠ Failed to load live price. Please refresh or check your internet connection.';
+        console.log('⚠ Failed to load live price. Please refresh or check your internet connection.');
       }
     }
 
     updatePrice();
 
     document.getElementById('signBtn').addEventListener('click', async () => {
-      const walletInfo = await tonConnectUI.walletInfo();
+      const walletInfo = await tonConnectUI.getWallet();
       if (!walletInfo) {
-        messageEl.textContent = '⚠ Please connect your wallet first.';
+        console.log('⚠ Please connect your wallet first.');
         return;
       }
       if (!tonPrice) {
-        messageEl.textContent = '⚠ Live price unavailable. Please refresh.';
+        console.log('⚠ Live price unavailable. Please refresh.');
         return;
       }
-      // Calculate the amount in nanotons (1 TON = 1e9 nanotons)
       const amountNano = (2 / tonPrice * 1e9).toFixed(0);
       try {
         await tonConnectUI.sendTransaction({
@@ -121,10 +185,10 @@
             amount: amountNano
           }],
         });
-        messageEl.textContent = '✅ Transaction request sent to your wallet!';
+        console.log('✅ Transaction request sent to your wallet!');
       } catch (err) {
         console.error(err);
-        messageEl.textContent = '❌ Transaction failed or cancelled.';
+        console.log('❌ Transaction failed or cancelled.');
       }
     });
   </script>
