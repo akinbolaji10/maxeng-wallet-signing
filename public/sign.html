@@ -24,7 +24,7 @@
       text-align: center;
       color: #000; /* Explicitly black */
     }
-    button, #ton-connect button {
+    button {
       width: 250px; /* Fixed width to match image */
       padding: 10px;
       margin: 10px 0;
@@ -32,67 +32,46 @@
       border: 2px solid #000; /* Black border */
       border-radius: 8px;
       background: none; /* No background color */
-      color: #000 !important; /* Black text, with !important to override potential library styles */
+      color: #000; /* Black text */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.3s;
     }
-    #ton-connect button {
-      position: relative; /* Ensure positioning for pseudo-element */
-    }
-    #ton-connect button::before {
+    #connectWalletBtn::before {
       content: '▶'; /* Play icon */
       margin-right: 10px;
       font-size: 16px;
       color: #000; /* Black play icon */
     }
-    #ton-connect button span {
-      display: inline-block; /* Ensure text is visible */
-      color: #000 !important; /* Black text, with !important to override potential library styles */
-    }
-    button:hover, #ton-connect button:hover {
+    button:hover {
       background: #f0f0f0; /* Light gray on hover */
-    }
-    /* Override any potential library styles that might change the text color */
-    #ton-connect button, #ton-connect button * {
-      color: #000 !important;
-      cursor: pointer !important;
     }
   </style>
 </head>
 <body>
   <h2>Connect Your TON Wallet</h2>
-  <div id="ton-connect"></div>
+  <button id="connectWalletBtn">Connect Wallet</button> <!-- Custom button -->
   <button id="signBtn">Sign $2 TON Transaction</button>
 
   <script>
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: window.location.origin + '/tonconnect-manifest.json',
-      buttonRootId: 'ton-connect'
+      manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+      // Note: We are not using buttonRootId since we're using a custom button
     });
 
     let tonPrice = null;
 
-    // Function to apply custom styles to the TON Connect button
-    function applyButtonStyles() {
-      const tonConnectButton = document.querySelector('#ton-connect button');
-      if (tonConnectButton) {
-        tonConnectButton.innerHTML = '<span style="color: #000 !important;">Connect Wallet</span>';
-        tonConnectButton.style.color = '#000';
-        tonConnectButton.style.cursor = 'pointer';
+    // Make the "Connect Wallet" button clickable instantly
+    document.getElementById('connectWalletBtn').addEventListener('click', async () => {
+      try {
+        await tonConnectUI.connectWallet();
+        console.log('✅ Wallet connected successfully!');
+      } catch (err) {
+        console.error(err);
+        console.log('❌ Wallet connection failed or was cancelled.');
       }
-    }
-
-    // Apply styles after the library initializes
-    tonConnectUI.onStatusChange((wallet) => {
-      applyButtonStyles(); // Reapply styles whenever the wallet status changes
-    });
-
-    // Initial application of styles after DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      applyButtonStyles();
     });
 
     async function getTonPriceUSD() {
