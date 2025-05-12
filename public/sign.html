@@ -106,17 +106,11 @@
     const tonPriceDisplay = document.getElementById('tonPriceDisplay');
     const retryPriceBtn = document.getElementById('retryPriceBtn');
 
-    // Function to truncate wallet address for display (e.g., UQBP...50bN)
-    function truncateAddress(address) {
-      if (!address) return '';
-      return `${address.slice(0, 4)}...${address.slice(-4)}`;
-    }
-
     // Function to update UI based on wallet connection status
     function updateWalletUI(wallet) {
       if (wallet) {
         const address = wallet.account?.address || 'Unknown Address';
-        walletInfoDiv.textContent = `Connected: ${truncateAddress(address)}`;
+        walletInfoDiv.textContent = address; // Show full address only
         walletInfoDiv.classList.remove('hidden');
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
@@ -249,58 +243,13 @@
 
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
-      retryPriceBtn.classList.add('hidden'); // Hide retry button during fetch
+      retryPriceBtn.classList.add('hidden');
 
       const price = await getTonPriceUSD();
       if (price) {
         tonPrice = price;
         const tonAmount = (2 / tonPrice).toFixed(4);
         tonPriceDisplay.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
-        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`);
-      } else {
-        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
-        retryPriceBtn.classList.remove('hidden'); // Show retry button on failure
-        console.log('⚠ Failed to load live price. Please retry or check your internet connection.');
-      }
-    }
+        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON...
 
-    // Call updatePrice immediately
-    updatePrice();
-
-    // Retry button click
-    retryPriceBtn.addEventListener('click', () => {
-      updatePrice();
-    });
-
-    document.getElementById('signBtn').addEventListener('click', async () => {
-      if (!tonConnectUI) {
-        console.error('TON Connect UI not initialized');
-        return;
-      }
-      const walletInfo = await tonConnectUI.getWallet();
-      if (!walletInfo) {
-        console.log('⚠ Please connect your wallet first.');
-        return;
-      }
-      if (!tonPrice) {
-        console.log('⚠ Live price unavailable. Please retry fetching the price.');
-        return;
-      }
-      const amountNano = (2 / tonPrice * 1e9).toFixed(0);
-      try {
-        await tonConnectUI.sendTransaction({
-          validUntil: Math.floor(Date.now() / 1000) + 360,
-          messages: [{
-            address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-            amount: amountNano
-          }],
-        });
-        console.log('✅ Transaction request sent to your wallet!');
-      } catch (err) {
-        console.error('Transaction error:', err);
-        console.log('❌ Transaction failed or cancelled.');
-      }
-    });
-  </script>
-</body>
-</html>
+Something went wrong, please refresh to reconnect or try again.
