@@ -58,20 +58,6 @@
       text-align: center;
       max-width: 250px;
     }
-    #tonPriceDisplay {
-      margin: 10px 0;
-      font-size: 14px;
-      font-weight: bold;
-      color: #000;
-      text-align: center;
-      max-width: 250px;
-    }
-    #retryPriceBtn {
-      width: 150px;
-      padding: 5px;
-      font-size: 12px;
-      margin-top: 5px;
-    }
     .hidden {
       display: none;
     }
@@ -83,8 +69,6 @@
   <div id="walletInfo" class="hidden"></div>
   <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
   <button id="signBtn">Sign $2 TON Transaction</button>
-  <div id="tonPriceDisplay">Fetching TON price...</div>
-  <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
     // Initialize TON Connect UI
@@ -99,12 +83,9 @@
       alert('Failed to initialize wallet connection. Please check your setup and refresh.');
     }
 
-    let tonPrice = null;
     const connectWalletBtn = document.getElementById('connectWalletBtn');
     const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
     const walletInfoDiv = document.getElementById('walletInfo');
-    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
-    const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
 
     // Function to update UI based on wallet connection status
@@ -175,95 +156,9 @@
       }
     });
 
-    // Fetch TON price from CoinGecko
-    async function getTonPriceFromCoinGecko() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd', {
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        });
-        console.log('CoinGecko Fetch response:', res);
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const data = await res.json();
-        console.log('CoinGecko Fetched data:', data);
-        if (!data || !data.toncoin || !data.toncoin.usd) {
-          throw new Error('Invalid data structure received from CoinGecko.');
-        }
-        return data.toncoin.usd;
-      } catch (err) {
-        console.error('CoinGecko Fetch failed:', err);
-        return null;
-      }
-    }
-
-    // Fetch TON price from Binance as a fallback
-    async function getTonPriceFromBinance() {
-      try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT', {
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        });
-        console.log('Binance Fetch response:', res);
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const data = await res.json();
-        console.log('Binance Fetched data:', data);
-        if (!data || !data.price) {
-          throw new Error('Invalid data structure received from Binance.');
-        }
-        return parseFloat(data.price);
-      } catch (err) {
-        console.error('Binance Fetch failed:', err);
-        return null;
-      }
-    }
-
-    async function getTonPriceUSD() {
-      // Try CoinGecko first
-      let price = await getTonPriceFromCoinGecko();
-      if (price) return price;
-
-      // Fallback to Binance
-      console.log('Falling back to Binance API for TON price...');
-      price = await getTonPriceFromBinance();
-      if (price) return price;
-
-      // Mock price as a last resort
-      console.log('Falling back to mock price for testing...');
-      return 4.50; // Ensures transaction can proceed
-    }
-
-    async function updatePrice() {
-      tonPriceDisplay.textContent = 'Fetching TON price...';
-      retryPriceBtn.classList.add('hidden');
-
-      const price = await getTonPriceUSD();
-      if (price) {
-        tonPrice = price;
-        const tonAmount = (2 / tonPrice).toFixed(4);
-        tonPriceDisplay.textContent = `Live price: $${tonPrice} → ~${tonAmount} TON for $2`;
-        console.log(`Live price: $${tonPrice} → ~${tonAmount} TON for $2`);
-      } else {
-        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
-        retryPriceBtn.classList.remove('hidden');
-        console.log('⚠ Failed to load live price. Please retry or check your internet connection.');
-      }
-    }
-
-    // Call updatePrice immediately
-    updatePrice();
-
-    // Retry button click
-    retryPriceBtn.addEventListener('click', () => {
-      updatePrice();
-    });
-
     // Sign $2 TON Transaction button click
     signBtn.addEventListener('click', async () => {
-      console.log('Sign $2 TON Transaction button clicked'); // Debug click event
+      console.log('Sign $2 TON Transaction button clicked');
 
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
@@ -278,20 +173,13 @@
         return;
       }
 
-      // Check if price is available
-      if (!tonPrice) {
-        alert('⚠ Live price unavailable. Please retry fetching the price.');
-        return;
-      }
-
-      // Calculate amount in nanoTON
-      const amountInUsd = 2;
-      const amountInTon = amountInUsd / tonPrice;
-      const amountNano = (amountInTon * 1e9).toFixed(0); // Convert TON to nanoTON
-      console.log(`Transaction details: ${amountInUsd} USD = ${amountInTon} TON = ${amountNano} nanoTON`);
+      // Hardcode the TON amount for $2 (using 0.5988 TON, equivalent to $2 at $3.34 per TON)
+      const amountInTon = 0.5988; // Fixed TON amount
+      const amountNano = (amountInTon * 1e9).toFixed(0); // Convert TON to nanoTON (598,800,000 nanoTON)
+      console.log(`Transaction details: Sending ${amountInTon} TON = ${amountNano} nanoTON`);
 
       try {
-        signBtn.textContent = 'Signing...'; // Visual feedback
+        signBtn.textContent = 'Signing...';
 
         const transaction = {
           validUntil: Math.floor(Date.now() / 1000) + 600, // Valid for 10 minutes
@@ -310,7 +198,7 @@
         console.error('Transaction error:', err);
         alert('❌ Transaction failed or cancelled. Check the console for details.');
       } finally {
-        signBtn.textContent = 'Sign $2 TON Transaction'; // Always reset button text
+        signBtn.textContent = 'Sign $2 TON Transaction';
       }
     });
   </script>
