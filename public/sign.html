@@ -169,7 +169,7 @@
     // Fetch TON price from CoinMarketCap
     async function getTonPriceFromCoinMarketCap() {
       try {
-        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797'; // Replace with your CoinMarketCap API key
+        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797'; // Your CoinMarketCap API key
         const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=TON&convert=USD', {
           mode: 'cors',
           headers: {
