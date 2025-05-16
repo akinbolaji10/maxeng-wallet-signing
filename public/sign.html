@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,6 +67,12 @@
       text-align: center;
       max-width: 250px;
     }
+    #retryPriceBtn {
+      width: 150px;
+      padding: 5px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
     .hidden {
       display: none;
     }
@@ -78,6 +85,7 @@
   <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
   <button id="signBtn">Sign $2 TON Transaction</button>
   <div id="tonPriceDisplay">Fetching TON price...</div>
+  <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
     // Initialize TON Connect UI
@@ -96,13 +104,37 @@
     const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
     const walletInfoDiv = document.getElementById('walletInfo');
     const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+    const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
 
     // Function to update UI based on wallet connection status
     function updateWalletUI(wallet) {
       if (wallet) {
-        const address = wallet.account?.address || 'Unknown Address';
-        walletInfoDiv.textContent = address; // Show full address
+        console.log('Full wallet object:', wallet); // Log the entire wallet object for debugging
+        let address = wallet.account?.address || 'Unknown Address';
+        console.log('Raw address from TON Connect UI:', address); // Log the raw address
+
+        // Convert raw address to user-friendly Base58 format if necessary
+        try {
+          const tonAddress = window.ton.Address.parse(address);
+          address = tonAddress.toString({ bounceable: true, urlSafe: true }); // Convert to user-friendly format (e.g., UQ... or EQ...)
+          console.log('Converted address to user-friendly format:', address);
+        } catch (err) {
+          console.error('Failed to convert address format:', err);
+        }
+
+        // Display the full address in the UI
+        walletInfoDiv.textContent = address;
+
+        // Optional: Shorten the address for display (e.g., UQBP1U...50bN)
+        // Uncomment the following lines if you prefer a shortened display
+        /*
+        const shortAddress = address.length > 10 
+          ? `${address.slice(0, 6)}...${address.slice(-4)}`
+          : address;
+        walletInfoDiv.textContent = shortAddress;
+        */
+
         walletInfoDiv.classList.remove('hidden');
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
@@ -166,11 +198,11 @@
       }
     });
 
-    // Fetch TON price from CoinMarketCap
+    // Fetch TON price from CoinMarketCap using ID
     async function getTonPriceFromCoinMarketCap() {
       try {
-        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797'; // Your CoinMarketCap API key
-        const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=TON&convert=USD', {
+        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797';
+        const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=the-open-network&convert=USD', {
           mode: 'cors',
           headers: {
             'Accept': 'application/json',
@@ -179,36 +211,76 @@
         });
         console.log('CoinMarketCap Fetch response:', res);
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
         }
         const data = await res.json();
         console.log('CoinMarketCap Fetched data:', data);
-        if (!data || !data.data || !data.data.TON || !data.data.TON.quote || !data.data.TON.quote.USD || !data.data.TON.quote.USD.price) {
+        if (!data || !data.data || !data.data['the-open-network'] || !data.data['the-open-network'].quote || !data.data['the-open-network'].quote.USD || !data.data['the-open-network'].quote.USD.price) {
           throw new Error('Invalid data structure received from CoinMarketCap.');
         }
-        return data.data.TON.quote.USD.price;
+        return data.data['the-open-network'].quote.USD.price;
       } catch (err) {
-        console.error('CoinMarketCap Fetch failed:', err);
+        console.error('CoinMarketCap Fetch failed:', err.message);
+        return null;
+      }
+    }
+
+    // Fetch TON price from Binance as a fallback
+    async function getTonPriceFromBinance() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT', {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+        console.log('Binance Fetch response:', res);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+        }
+        const data = await res.json();
+        console.log('Binance Fetched data:', data);
+        if (!data || !data.price) {
+          throw new Error('Invalid data structure received from Binance.');
+        }
+        return parseFloat(data.price);
+      } catch (err) {
+        console.error('Binance Fetch failed:', err.message);
         return null;
       }
     }
 
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
+      retryPriceBtn.classList.add('hidden');
 
-      const price = await getTonPriceFromCoinMarketCap();
+      let price = await getTonPriceFromCoinMarketCap();
+      if (price) {
+        tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+        console.log(`Live TON price: $${price.toFixed(2)}`);
+        return;
+      }
+
+      console.log('Falling back to Binance API for TON price...');
+      price = await getTonPriceFromBinance();
       if (price) {
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
         console.log(`Live TON price: $${price.toFixed(2)}`);
       } else {
         tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
-        console.log('⚠ Failed to load live price. Please check your internet connection or API key.');
+        retryPriceBtn.classList.remove('hidden');
+        console.log('⚠ Failed to load live price. Please retry or check your internet connection.');
       }
     }
 
     // Call updatePrice immediately and set up auto-refresh every 24 hours
     updatePrice();
     setInterval(updatePrice, 86400000); // Refresh every 24 hours (86,400,000 milliseconds)
+
+    // Retry button click
+    retryPriceBtn.addEventListener('click', () => {
+      updatePrice();
+    });
 
     // Sign $2 TON Transaction button click
     signBtn.addEventListener('click', async () => {
