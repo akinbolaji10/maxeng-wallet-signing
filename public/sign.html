@@ -114,13 +114,30 @@
         let address = wallet.account?.address || 'Unknown Address';
         console.log('Raw address from TON Connect UI:', address); // Log the raw address
 
-        // Convert raw address to user-friendly Base58 format if necessary
-        try {
-          const tonAddress = window.ton.Address.parse(address);
-          address = tonAddress.toString({ bounceable: true, urlSafe: true }); // Convert to user-friendly format (e.g., UQ... or EQ...)
-          console.log('Converted address to user-friendly format:', address);
-        } catch (err) {
-          console.error('Failed to convert address format:', err);
+        // Check if the address is already in Base58 format (starts with UQ or EQ)
+        if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
+          console.log('Address is already in user-friendly Base58 format:', address);
+        } else {
+          // Try to convert the address to user-friendly Base58 format
+          try {
+            const tonAddress = window.ton.Address.parse(address);
+            address = tonAddress.toString({ bounceable: true, urlSafe: true }); // Convert to user-friendly format (e.g., UQ... or EQ...)
+            console.log('Converted address to user-friendly format:', address);
+          } catch (err) {
+            console.error('Failed to convert address format:', err);
+            // Fallback: If conversion fails, try to derive the address from public key
+            if (wallet.account?.publicKey) {
+              console.log('Falling back to deriving address from public key...');
+              try {
+                const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
+                const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
+                address = walletContract.address.toString({ bounceable: true, urlSafe: true });
+                console.log('Derived address from public key:', address);
+              } catch (err) {
+                console.error('Failed to derive address from public key:', err);
+              }
+            }
+          }
         }
 
         // Display the full address in the UI
