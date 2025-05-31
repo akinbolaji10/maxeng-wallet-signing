@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
@@ -97,7 +97,7 @@
     let tonConnectUI;
     let tonPriceUsd = null; // Store the fetched TON price
     try {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+      tonConnectUI = new TONConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
       console.log('TON Connect UI initialized successfully');
@@ -126,8 +126,10 @@
       const wallet = tonConnectUI?.wallet;
       if (wallet && tonPriceUsd && chatId) {
         signBtn.disabled = false;
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
       } else {
         signBtn.disabled = true;
+        signBtn.textContent = 'Sign $2 TON Transaction';
       }
     }
 
@@ -174,22 +176,12 @@
       updateSignButton();
     }
 
-    // Set up wallet status listener and initial check
+    // Set up wallet status listener
     if (tonConnectUI) {
       tonConnectUI.onStatusChange((wallet) => {
         console.log('Wallet status changed:', wallet);
         updateWalletUI(wallet);
       });
-
-      (async () => {
-        try {
-          const wallet = await tonConnectUI.getWallet();
-          console.log('Initial wallet check:', wallet);
-          updateWalletUI(wallet);
-        } catch (err) {
-          console.error('Error checking initial wallet status:', err);
-        }
-      })();
     }
 
     // Connect Wallet button click
@@ -364,8 +356,7 @@
       }
 
       // Check if wallet is connected
-      const walletInfo = await tonConnectUI.getWallet();
-      if (!walletInfo) {
+      if (!tonConnectUI.wallet) {
         alert('⚠ Please connect your wallet first.');
         return;
       }
@@ -379,7 +370,7 @@
       // Calculate TON amount for $2
       const usdAmount = 2.0;
       const amountInTon = usdAmount / tonPriceUsd;
-      const amountNano = (amountInTon * 1e9).toFixed(0); // Convert TON to nanoTON
+      const amountNano = (amountInTon * 1e9).toString(); // Convert TON to nanoTON
       console.log(`Transaction details: Sending ${amountInTon} TON = ${amountNano} nanoTON for $2 at $${tonPriceUsd}/TON`);
 
       try {
@@ -407,7 +398,7 @@
         const transactionHash = result.boc;
 
         // Get sender address
-        const senderAddress = walletInfo.account.address;
+        const senderAddress = tonConnectUI.wallet.account.address;
 
         // Notify the bot's webhook
         const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
@@ -437,7 +428,7 @@
         console.error('Transaction error:', err);
         alert('❌ Transaction failed or cancelled: ' + err.message);
       } finally {
-        signBtn.textContent = 'Sign $2 TON Transaction';
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
         updateSignButton();
       }
     });
