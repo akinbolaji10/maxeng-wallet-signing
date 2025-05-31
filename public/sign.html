@@ -226,30 +226,26 @@
       }
     });
 
-    // Fetch TON price from CoinMarketCap using ID
-    async function getTonPriceFromCoinMarketCap() {
+    // Fetch TON price from CoinGecko
+    async function getTonPriceFromCoinGecko() {
       try {
-        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797';
-        const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=the-open-network&convert=USD', {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
           mode: 'cors',
-          headers: {
-            'Accept': 'application/json',
-            'X-CMC_PRO_API_KEY': apiKey
-          }
+          headers: { 'Accept': 'application/json' }
         });
-        console.log('CoinMarketCap Fetch response:', res);
+        console.log('CoinGecko Fetch response:', res);
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
         }
         const data = await res.json();
-        console.log('CoinMarketCap Fetched data:', data);
-        if (!data || !data.data || !data.data['the-open-network'] || !data.data['the-open-network'].quote || !data.data['the-open-network'].quote.USD || !data.data['the-open-network'].quote.USD.price) {
-          throw new Error('Invalid data structure received from CoinMarketCap.');
+        console.log('CoinGecko Fetched data:', data);
+        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) {
+          throw new Error('Invalid data structure received from CoinGecko.');
         }
-        return data.data['the-open-network'].quote.USD.price;
+        return data['the-open-network'].usd;
       } catch (err) {
-        console.error('CoinMarketCap Fetch failed:', err.message);
+        console.error('CoinGecko Fetch failed:', err.message);
         return null;
       }
     }
@@ -278,25 +274,66 @@
       }
     }
 
+    // Fetch TON price from CoinMarketCap as a secondary fallback
+    async function getTonPriceFromCoinMarketCap() {
+      try {
+        const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797';
+        const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=11419&convert=USD', {
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json',
+            'X-CMC_PRO_API_KEY': apiKey
+          }
+        });
+        console.log('CoinMarketCap Fetch response:', res);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+        }
+        const data = await res.json();
+        console.log('CoinMarketCap Fetched data:', data);
+        if (!data || !data.data || !data.data['11419'] || !data.data['11419'].quote || !data.data['11419'].quote.USD || !data.data['11419'].quote.USD.price) {
+          throw new Error('Invalid data structure received from CoinMarketCap.');
+        }
+        return data.data['11419'].quote.USD.price;
+      } catch (err) {
+        console.error('CoinMarketCap Fetch failed:', err.message);
+        return null;
+      }
+    }
+
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
       retryPriceBtn.classList.add('hidden');
 
-      let price = await getTonPriceFromCoinMarketCap();
+      // Try CoinGecko first
+      let price = await getTonPriceFromCoinGecko();
       if (price) {
         tonPriceUsd = price;
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
-        console.log(`Live TON price: $${price.toFixed(2)}`);
+        console.log(`Live TON price (CoinGecko): $${price.toFixed(2)}`);
         updateSignButton();
         return;
       }
 
+      // Fallback to Binance
       console.log('Falling back to Binance API for TON price...');
       price = await getTonPriceFromBinance();
       if (price) {
         tonPriceUsd = price;
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
-        console.log(`Live TON price: $${price.toFixed(2)}`);
+        console.log(`Live TON price (Binance): $${price.toFixed(2)}`);
+        updateSignButton();
+        return;
+      }
+
+      // Fallback to CoinMarketCap
+      console.log('Falling back to CoinMarketCap API for TON price...');
+      price = await getTonPriceFromCoinMarketCap();
+      if (price) {
+        tonPriceUsd = price;
+        tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+        console.log(`Live TON price (CoinMarketCap): $${price.toFixed(2)}`);
         updateSignButton();
       } else {
         tonPriceUsd = null;
@@ -373,7 +410,7 @@
         const senderAddress = walletInfo.account.address;
 
         // Notify the bot's webhook
-        const webhookUrl = 'https://maxengbot.onrender.com/ton_payment'; // Replace with your Render hostname if different
+        const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
         const webhookPayload = {
           chat_id: chatId,
           senderAddress: senderAddress,
