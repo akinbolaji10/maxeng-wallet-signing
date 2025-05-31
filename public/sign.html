@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@1.1.0/dist/tonconnect-ui.min.js" defer></script>
+  <!-- Fallback local script (download and deploy if CDN fails) -->
+  <!-- <script src="/tonconnect-ui.min.js" defer></script> -->
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
@@ -94,22 +96,35 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
+    // Check if TON Connect UI script loaded
+    console.log('Checking TON Connect UI script load...');
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof TonConnectUI === 'undefined') {
+          console.error('TonConnectUI is not defined after page load. CDN failed or script was blocked.');
+          alert('Failed to load TON Connect UI library. Please check your internet, disable conflicting extensions (MetaMask, Zerion, Backpack), clear cache, or try another browser. Then refresh.');
+        } else {
+          console.log('TonConnectUI is defined. Proceeding with initialization.');
+        }
+      }, 1000); // Wait 1 second for scripts to load
+    });
+
     // Initialize TON Connect UI
     let tonConnectUI;
-    let tonPriceUsd = null; // Store the fetched TON price
-    if (typeof TonConnectUI === 'undefined') {
-      console.error('TonConnectUI is not defined. Check if @tonconnect/ui script loaded correctly.');
-      alert('Failed to load TON Connect UI library. Please check your internet connection or disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
-    } else {
+    let tonPriceUsd = null;
+    if (typeof TonConnectUI !== 'undefined') {
       try {
+        console.log('Initializing TON Connect UI with manifest:', window.location.origin + '/tonconnect-manifest.json');
         tonConnectUI = new TonConnectUI({
           manifestUrl: window.location.origin + '/tonconnect-manifest.json'
         });
         console.log('TON Connect UI initialized successfully');
       } catch (err) {
         console.error('Failed to initialize TON Connect UI:', err);
-        alert('Failed to initialize wallet connection: ' + err.message + '. Please check tonconnect-manifest.json and refresh.');
+        alert('Failed to initialize wallet connection: ' + err.message + '. Ensure tonconnect-manifest.json is at ' + window.location.origin + '/tonconnect-manifest.json and refresh.');
       }
+    } else {
+      console.warn('Skipping TON Connect UI initialization due to undefined TonConnectUI');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -123,8 +138,11 @@
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id');
     if (!chatId) {
-      alert('Error: chat_id not found in URL. Please access this page via the bot.');
+      alert('Error: chat_id not found in URL. Please access via /subscribe in Telegram.');
       signBtn.disabled = true;
+      console.error('chat_id missing from URL parameters');
+    } else {
+      console.log('chat_id found:', chatId);
     }
 
     // Function to update UI based on wallet connection status and TON price
@@ -184,17 +202,21 @@
 
     // Set up wallet status listener
     if (tonConnectUI) {
+      console.log('Setting up wallet status listener');
       tonConnectUI.onStatusChange((wallet) => {
         console.log('Wallet status changed:', wallet);
         updateWalletUI(wallet);
       });
+    } else {
+      console.warn('Wallet status listener not set up due to uninitialized tonConnectUI');
     }
 
     // Connect Wallet button click
     connectWalletBtn.addEventListener('click', async () => {
+      console.log('Connect Wallet button clicked');
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
-        alert('Wallet connection not available. Please disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
+        alert('Wallet connection not available. Please disable conflicting extensions (MetaMask, Zerion, Backpack), clear cache, or try another browser. Then refresh.');
         return;
       }
       try {
@@ -211,6 +233,7 @@
 
     // Disconnect Wallet button click
     disconnectWalletBtn.addEventListener('click', async () => {
+      console.log('Disconnect Wallet button clicked');
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
         return;
@@ -227,6 +250,7 @@
     // Fetch TON price from CoinGecko
     async function getTonPriceFromCoinGecko() {
       try {
+        console.log('Fetching TON price from CoinGecko...');
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
           mode: 'cors',
           headers: { 'Accept': 'application/json' }
@@ -251,6 +275,7 @@
     // Fetch TON price from Binance as a fallback
     async function getTonPriceFromBinance() {
       try {
+        console.log('Fetching TON price from Binance...');
         const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT', {
           mode: 'cors',
           headers: { 'Accept': 'application/json' }
@@ -275,6 +300,7 @@
     // Fetch TON price from CoinMarketCap as a secondary fallback
     async function getTonPriceFromCoinMarketCap() {
       try {
+        console.log('Fetching TON price from CoinMarketCap...');
         const apiKey = '7c12ee33-5aba-48af-8869-0de310aa9797';
         const res = await fetch('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=11419&convert=USD', {
           mode: 'cors',
@@ -343,11 +369,13 @@
     }
 
     // Call updatePrice immediately and set up auto-refresh every 24 hours
+    console.log('Starting initial TON price fetch');
     updatePrice();
-    setInterval(updatePrice, 86400000); // Refresh every 24 hours (86,400,000 milliseconds)
+    setInterval(updatePrice, 86400000); // Refresh every 24 hours
 
     // Retry button click
     retryPriceBtn.addEventListener('click', () => {
+      console.log('Retry price fetch button clicked');
       updatePrice();
     });
 
@@ -357,19 +385,21 @@
 
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
-        alert('Wallet connection not available. Please disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
+        alert('Wallet connection not available. Please disable conflicting extensions (MetaMask, Zerion, Backpack), clear cache, or try another browser. Then refresh.');
         return;
       }
 
       // Check if wallet is connected
       if (!tonConnectUI.wallet) {
         alert('⚠ Please connect your wallet first.');
+        console.warn('No wallet connected');
         return;
       }
 
       // Check if TON price is available
       if (!tonPriceUsd) {
         alert('⚠ TON price not available. Please retry fetching the price.');
+        console.warn('TON price not available');
         return;
       }
 
@@ -429,6 +459,7 @@
           throw new Error(`Webhook notification failed: ${webhookResponse.status} ${errorText}`);
         }
 
+        console.log('Webhook notified successfully');
         alert('✅ Transaction sent successfully! Check the bot for confirmation.');
       } catch (err) {
         console.error('Transaction error:', err);
