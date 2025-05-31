@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
+  <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
@@ -97,13 +98,13 @@
     let tonConnectUI;
     let tonPriceUsd = null; // Store the fetched TON price
     try {
-      tonConnectUI = new TONConnectUI({
+      tonConnectUI = new TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
       console.log('TON Connect UI initialized successfully');
     } catch (err) {
       console.error('Failed to initialize TON Connect UI:', err);
-      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+      alert('Failed to initialize wallet connection. Please check your setup and refresh. Error: ' + err.message);
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -146,7 +147,7 @@
           try {
             const tonAddress = window.ton.Address.parse(address);
             address = tonAddress.toString({ bounceable: true, urlSafe: true });
-            console.log('Converted address to user-friendly format:', address);
+            console.log('Convert to user-friendly format:', address);
           } catch (err) {
             console.error('Failed to convert address format:', err);
             if (wallet.account?.publicKey) {
@@ -197,7 +198,7 @@
         console.log('✅ Wallet connected successfully!');
       } catch (err) {
         console.error('Wallet connection error:', err);
-        alert('❌ Wallet connection failed or was cancelled.');
+        alert('❌ Wallet connection failed or was cancelled: ' + err.message);
       } finally {
         connectWalletBtn.textContent = 'Connect Wallet';
       }
@@ -214,7 +215,7 @@
         console.log('✅ Wallet disconnected successfully!');
       } catch (err) {
         console.error('Disconnect error:', err);
-        alert('❌ Failed to disconnect wallet.');
+        alert('❌ Failed to disconnect wallet: ' + err.message);
       }
     });
 
