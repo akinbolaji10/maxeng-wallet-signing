@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
@@ -97,14 +97,19 @@
     // Initialize TON Connect UI
     let tonConnectUI;
     let tonPriceUsd = null; // Store the fetched TON price
-    try {
-      tonConnectUI = new TonConnectUI({
-        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
-      });
-      console.log('TON Connect UI initialized successfully');
-    } catch (err) {
-      console.error('Failed to initialize TON Connect UI:', err);
-      alert('Failed to initialize wallet connection. Please check your setup and refresh. Error: ' + err.message);
+    if (typeof TonConnectUI === 'undefined') {
+      console.error('TonConnectUI is not defined. Check if @tonconnect/ui script loaded correctly.');
+      alert('Failed to load TON Connect UI library. Please check your internet connection or disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
+    } else {
+      try {
+        tonConnectUI = new TonConnectUI({
+          manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+        });
+        console.log('TON Connect UI initialized successfully');
+      } catch (err) {
+        console.error('Failed to initialize TON Connect UI:', err);
+        alert('Failed to initialize wallet connection: ' + err.message + '. Please check tonconnect-manifest.json and refresh.');
+      }
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -147,7 +152,7 @@
           try {
             const tonAddress = window.ton.Address.parse(address);
             address = tonAddress.toString({ bounceable: true, urlSafe: true });
-            console.log('Convert to user-friendly format:', address);
+            console.log('Converted to user-friendly format:', address);
           } catch (err) {
             console.error('Failed to convert address format:', err);
             if (wallet.account?.publicKey) {
@@ -189,7 +194,7 @@
     connectWalletBtn.addEventListener('click', async () => {
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
-        alert('Wallet connection not available. Please refresh the page.');
+        alert('Wallet connection not available. Please disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
         return;
       }
       try {
@@ -352,7 +357,7 @@
 
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
-        alert('Wallet connection not available. Please refresh the page.');
+        alert('Wallet connection not available. Please disable conflicting wallet extensions (e.g., MetaMask, Zerion) and refresh.');
         return;
       }
 
