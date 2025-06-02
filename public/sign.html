@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.0.1/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
@@ -94,17 +94,29 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
+    // Check TON Connect UI script
+    console.log('Checking TON Connect UI...');
+    if (typeof window.TonConnectUI === 'undefined') {
+      console.error('TonConnectUI not defined. Check script loading or extensions.');
+      alert('Failed to load TON Connect UI library. Disable all wallet extensions, clear cache, and refresh.');
+    } else {
+      console.log('TonConnectUI found:', window.TonConnectUI);
+    }
+
     // Initialize TON Connect UI
     let tonConnectUI;
     let tonPriceUsd = null;
-    try {
-      tonConnectUI = new window.TonConnectUI({
-        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
-      });
-      console.log('TON Connect UI initialized successfully');
-    } catch (err) {
-      console.error('Failed to initialize TON Connect UI:', err);
-      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+    if (typeof window.TonConnectUI !== 'undefined') {
+      try {
+        console.log('Initializing TON Connect UI with manifest:', window.location.origin + '/tonconnect-manifest.json');
+        tonConnectUI = new window.TonConnectUI({
+          manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+        });
+        console.log('TON Connect UI initialized successfully');
+      } catch (err) {
+        console.error('Failed to initialize TON Connect UI:', err.message);
+        alert('Failed to initialize wallet: ' + err.message + '. Ensure manifest is accessible and refresh.');
+      }
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -125,7 +137,7 @@
       console.log('chat_id found:', chatId);
     }
 
-    // Function to update UI based on wallet connection status and TON price
+    // Function to update UI based on wallet connection and TON price
     function updateSignButton() {
       const wallet = tonConnectUI?.wallet;
       if (wallet && tonPriceUsd && chatId) {
@@ -140,7 +152,7 @@
     // Function to update UI based on wallet connection status
     function updateWalletUI(wallet) {
       if (wallet) {
-        console.log('Full wallet object:', wallet);
+        console.log('Wallet object:', wallet);
         let address = wallet.account?.address || 'Unknown Address';
         console.log('Raw address:', address);
 
@@ -196,7 +208,7 @@
       console.log('Connect Wallet clicked');
       if (!tonConnectUI) {
         console.error('TON Connect UI not initialized');
-        alert('Wallet connection unavailable. Disable extensions (MetaMask, Zerion, Backpack), clear cache, or try another browser. Refresh.');
+        alert('Wallet connection unavailable. Disable ALL wallet extensions (e.g., MetaMask, Zerion), clear cache, or try another browser. Refresh.');
         return;
       }
       try {
