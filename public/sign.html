@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
-  <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@2.0.1/dist/tonconnect-ui.min.js"></script>
-  <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
+  <script defer src="https://unpkg.com/buffer@latest/index.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js"></script>
+  <script defer src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -94,287 +94,288 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
-    // Check TON Connect UI script
-    console.log('Checking TON Connect UI...');
-    if (typeof window.TonConnectUI === 'undefined') {
-      console.error('TonConnectUI not defined. Check script loading or extensions.');
-      alert('Failed to load TON Connect UI library. Disable all wallet extensions, clear cache, and refresh.');
-    } else {
-      console.log('TonConnectUI found:', window.TonConnectUI);
-    }
+    // Scope TON Connect UI to avoid global conflicts
+    (function () {
+      console.log('Checking TON Connect UI availability...');
+      if (typeof TON_CONNECT_UI === 'undefined') {
+        console.error('TON_CONNECT_UI not defined. Check script loading or extensions.');
+        alert('Failed to load TON wallet library. Try refreshing or using a different browser.');
+        return;
+      }
 
-    // Initialize TON Connect UI
-    let tonConnectUI;
-    let tonPriceUsd = null;
-    if (typeof window.TonConnectUI !== 'undefined') {
+      // Initialize TON Connect UI
+      let tonConnectUI;
+      let tonPriceUsd = null;
       try {
         console.log('Initializing TON Connect UI with manifest:', window.location.origin + '/tonconnect-manifest.json');
-        tonConnectUI = new window.TonConnectUI({
+        tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
           manifestUrl: window.location.origin + '/tonconnect-manifest.json'
         });
         console.log('TON Connect UI initialized successfully');
       } catch (err) {
         console.error('Failed to initialize TON Connect UI:', err.message);
-        alert('Failed to initialize wallet: ' + err.message + '. Ensure manifest is accessible and refresh.');
+        alert('Failed to initialize wallet: ' + err.message + '. Ensure the manifest is accessible and refresh.');
+        return;
       }
-    }
 
-    const connectWalletBtn = document.getElementById('connectWalletBtn');
-    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
-    const walletInfoDiv = document.getElementById('walletInfo');
-    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
-    const retryPriceBtn = document.getElementById('retryPriceBtn');
-    const signBtn = document.getElementById('signBtn');
+      const connectWalletBtn = document.getElementById('connectWalletBtn');
+      const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+      const walletInfoDiv = document.getElementById('walletInfo');
+      const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+      const retryPriceBtn = document.getElementById('retryPriceBtn');
+      const signBtn = document.getElementById('signBtn');
 
-    // Get chat_id from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chat_id');
-    if (!chatId) {
-      alert('Error: chat_id not found in URL. Please access via /subscribe in Telegram.');
-      signBtn.disabled = true;
-      console.error('chat_id missing');
-    } else {
-      console.log('chat_id found:', chatId);
-    }
-
-    // Function to update UI based on wallet connection and TON price
-    function updateSignButton() {
-      const wallet = tonConnectUI?.wallet;
-      if (wallet && tonPriceUsd && chatId) {
-        signBtn.disabled = false;
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
-      } else {
+      // Get chat_id from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatId = urlParams.get('chat_id');
+      if (!chatId) {
+        alert('Error: chat_id not found in URL. Please access via /subscribe in Telegram.');
         signBtn.disabled = true;
-        signBtn.textContent = 'Sign $2 TON Transaction';
+        console.error('chat_id missing');
+        return;
+      } else {
+        console.log('chat_id found:', chatId);
       }
-    }
 
-    // Function to update UI based on wallet connection status
-    function updateWalletUI(wallet) {
-      if (wallet) {
-        console.log('Wallet object:', wallet);
-        let address = wallet.account?.address || 'Unknown Address';
-        console.log('Raw address:', address);
-
-        if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
-          console.log('Address in user-friendly Base58 format:', address);
+      // Update UI based on wallet connection and TON price
+      function updateSignButton() {
+        const wallet = tonConnectUI?.wallet;
+        if (wallet && tonPriceUsd && chatId) {
+          signBtn.disabled = false;
+          signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
         } else {
-          try {
-            const tonAddress = window.ton.Address.parse(address);
-            address = tonAddress.toString({ bounceable: true, urlSafe: true });
-            console.log('Converted to user-friendly format:', address);
-          } catch (err) {
-            console.error('Failed to convert address:', err);
-            if (wallet.account?.publicKey) {
-              console.log('Deriving address from public key...');
-              try {
-                const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
-                const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
-                address = walletContract.address.toString({ bounceable: true, urlSafe: true });
-                console.log('Derived address:', address);
-              } catch (err) {
-                console.error('Failed to derive address:', err);
+          signBtn.disabled = true;
+          signBtn.textContent = 'Sign $2 TON Transaction';
+        }
+      }
+
+      // Update UI based on wallet connection status
+      function updateWalletUI(wallet) {
+        if (wallet) {
+          console.log('Wallet object:', wallet);
+          let address = wallet.account?.address || 'Unknown Address';
+          console.log('Raw address:', address);
+
+          if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
+            console.log('Address in user-friendly Base58 format:', address);
+          } else {
+            try {
+              const tonAddress = window.ton.Address.parse(address);
+              address = tonAddress.toString({ bounceable: true, urlSafe: true });
+              console.log('Converted to user-friendly format:', address);
+            } catch (err) {
+              console.error('Failed to convert address:', err);
+              if (wallet.account?.publicKey) {
+                console.log('Deriving address from public key...');
+                try {
+                  const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
+                  const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
+                  address = walletContract.address.toString({ bounceable: true, urlSafe: true });
+                  console.log('Derived address:', address);
+                } catch (err) {
+                  console.error('Failed to derive address:', err);
+                }
               }
             }
           }
+
+          walletInfoDiv.textContent = address;
+          walletInfoDiv.classList.remove('hidden');
+          connectWalletBtn.classList.add('hidden');
+          disconnectWalletBtn.classList.remove('hidden');
+        } else {
+          walletInfoDiv.textContent = '';
+          walletInfoDiv.classList.add('hidden');
+          connectWalletBtn.classList.remove('hidden');
+          disconnectWalletBtn.classList.add('hidden');
         }
-
-        walletInfoDiv.textContent = address;
-        walletInfoDiv.classList.remove('hidden');
-        connectWalletBtn.classList.add('hidden');
-        disconnectWalletBtn.classList.remove('hidden');
-      } else {
-        walletInfoDiv.textContent = '';
-        walletInfoDiv.classList.add('hidden');
-        connectWalletBtn.classList.remove('hidden');
-        disconnectWalletBtn.classList.add('hidden');
+        updateSignButton();
       }
-      updateSignButton();
-    }
 
-    // Set up wallet status listener
-    if (tonConnectUI) {
-      console.log('Setting up wallet status listener');
-      tonConnectUI.onStatusChange((wallet) => {
-        console.log('Wallet status changed:', wallet);
-        updateWalletUI(wallet);
+      // Set up wallet status listener
+      if (tonConnectUI) {
+        console.log('Setting up wallet status listener');
+        tonConnectUI.onStatusChange((wallet) => {
+          console.log('Wallet status changed:', wallet);
+          updateWalletUI(wallet);
+        });
+      } else {
+        console.warn('Wallet status listener not set up due to uninitialized tonConnectUI');
+      }
+
+      // Connect Wallet button click
+      connectWalletBtn.addEventListener('click', async () => {
+        console.log('Connect Wallet clicked');
+        if (!tonConnectUI) {
+          console.error('TON Connect UI not initialized');
+          alert('Wallet connection unavailable. Try refreshing or using a different browser.');
+          return;
+        }
+        try {
+          connectWalletBtn.textContent = 'Connecting...';
+          await tonConnectUI.connectWallet();
+          console.log('✅ Wallet connected!');
+        } catch (err) {
+          console.error('Wallet connection error:', err);
+          alert('❌ Wallet connection failed: ' + err.message);
+        } finally {
+          connectWalletBtn.textContent = 'Connect Wallet';
+        }
       });
-    } else {
-      console.warn('Wallet status listener not set up due to uninitialized tonConnectUI');
-    }
 
-    // Connect Wallet button click
-    connectWalletBtn.addEventListener('click', async () => {
-      console.log('Connect Wallet clicked');
-      if (!tonConnectUI) {
-        console.error('TON Connect UI not initialized');
-        alert('Wallet connection unavailable. Disable ALL wallet extensions (e.g., MetaMask, Zerion), clear cache, or try another browser. Refresh.');
-        return;
-      }
-      try {
-        connectWalletBtn.textContent = 'Connecting...';
-        await tonConnectUI.connectWallet();
-        console.log('✅ Wallet connected!');
-      } catch (err) {
-        console.error('Wallet connection error:', err);
-        alert('❌ Wallet connection failed: ' + err.message);
-      } finally {
-        connectWalletBtn.textContent = 'Connect Wallet';
-      }
-    });
-
-    // Disconnect Wallet button click
-    disconnectWalletBtn.addEventListener('click', async () => {
-      console.log('Disconnect Wallet clicked');
-      if (!tonConnectUI) {
-        console.error('TON Connect UI not initialized');
-        return;
-      }
-      try {
-        await tonConnectUI.disconnect();
-        console.log('✅ Wallet disconnected!');
-      } catch (err) {
-        console.error('Disconnect error:', err);
-        alert('❌ Failed to disconnect wallet: ' + err.message);
-      }
-    });
-
-    // Fetch TON price from CoinGecko
-    async function getTonPriceFromCoinGecko() {
-      try {
-        console.log('Fetching TON price from CoinGecko...');
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        });
-        console.log('CoinGecko response:', res.status);
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+      // Disconnect Wallet button click
+      disconnectWalletBtn.addEventListener('click', async () => {
+        console.log('Disconnect Wallet clicked');
+        if (!tonConnectUI) {
+          console.error('TON Connect UI not initialized');
+          return;
         }
-        const data = await res.json();
-        console.log('CoinGecko data:', data);
-        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) {
-          throw new Error('Invalid data from CoinGecko.');
+        try {
+          await tonConnectUI.disconnect();
+          console.log('✅ Wallet disconnected!');
+        } catch (err) {
+          console.error('Disconnect error:', err);
+          alert('❌ Failed to disconnect wallet: ' + err.message);
         }
-        return data['the-open-network'].usd;
-      } catch (err) {
-        console.error('CoinGecko fetch failed:', err.message);
-        return null;
+      });
+
+      // Fetch TON price from CoinGecko
+      async function getTonPriceFromCoinGecko() {
+        try {
+          console.log('Fetching TON price from CoinGecko...');
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
+            mode: 'cors',
+            headers: { 'Accept': 'application/json' }
+          });
+          console.log('CoinGecko response:', res.status);
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+          }
+          const data = await res.json();
+          console.log('CoinGecko data:', data);
+          if (!data || !data['the-open-network'] || !data['the-open-network'].usd) {
+            throw new Error('Invalid data from CoinGecko.');
+          }
+          return data['the-open-network'].usd;
+        } catch (err) {
+          console.error('CoinGecko fetch failed:', err.message);
+          return null;
+        }
       }
-    }
 
-    async function updatePrice() {
-      tonPriceDisplay.textContent = 'Fetching TON price...';
-      retryPriceBtn.classList.add('hidden');
+      async function updatePrice() {
+        tonPriceDisplay.textContent = 'Fetching TON price...';
+        retryPriceBtn.classList.add('hidden');
 
-      let price = await getTonPriceFromCoinGecko();
-      if (price) {
-        tonPriceUsd = price;
-        tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
-        console.log(`Live TON price: $${price.toFixed(2)}`);
-        updateSignButton();
-      } else {
-        tonPriceUsd = null;
-        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
-        retryPriceBtn.classList.remove('hidden');
-        console.log('⚠ Failed to load price. Retry or check connection.');
-        updateSignButton();
+        let price = await getTonPriceFromCoinGecko();
+        if (price) {
+          tonPriceUsd = price;
+          tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+          console.log(`Live TON price: $${price.toFixed(2)}`);
+          updateSignButton();
+        } else {
+          tonPriceUsd = null;
+          tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
+          retryPriceBtn.classList.remove('hidden');
+          console.log('⚠ Failed to load price. Retry or check connection.');
+          updateSignButton();
+        }
       }
-    }
 
-    // Call updatePrice and set auto-refresh every 24 hours
-    console.log('Starting TON price fetch');
-    updatePrice();
-    setInterval(updatePrice, 86400000);
-
-    // Retry button click
-    retryPriceBtn.addEventListener('click', () => {
-      console.log('Retry price fetch clicked');
+      // Call updatePrice and set auto-refresh every 24 hours
+      console.log('Starting TON price fetch');
       updatePrice();
-    });
+      setInterval(updatePrice, 86400000);
 
-    // Sign $2 TON Transaction button click
-    signBtn.addEventListener('click', async () => {
-      console.log('Sign $2 TON Transaction button clicked');
+      // Retry button click
+      retryPriceBtn.addEventListener('click', () => {
+        console.log('Retry price fetch clicked');
+        updatePrice();
+      });
 
-      if (!tonConnectUI) {
-        console.error('TON Connect UI not initialized');
-        alert('Wallet connection unavailable. Please refresh the page.');
-        return;
-      }
+      // Sign $2 TON Transaction button click
+      signBtn.addEventListener('click', async () => {
+        console.log('Sign $2 TON Transaction clicked');
 
-      if (!tonConnectUI.wallet) {
-        alert('⚠ Please connect your wallet first.');
-        console.warn('No wallet connected');
-        return;
-      }
-
-      if (!tonPriceUsd) {
-        alert('⚠ TON price unavailable. Retry fetching price.');
-        console.warn('TON price unavailable');
-        return;
-      }
-
-      const usdAmount = 2.0;
-      const amountInTon = usdAmount / tonPriceUsd;
-      const amountNano = (amountInTon * 1e9).toString();
-      console.log(`Transaction: Sending ${amountInTon} TON = ${amountNano} nanoTON for $2 at $${tonPriceUsd}/TON`);
-
-      try {
-        signBtn.textContent = 'Signing...';
-        signBtn.disabled = true;
-
-        const transaction = {
-          validUntil: Math.floor(Date.now() / 1000) + 600,
-          messages: [
-            {
-              address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-              amount: amountNano,
-              payload: window.ton.TonWeb.utils.toBase64(`chat_id:${chatId}`)
-            }
-          ]
-        };
-        console.log('Sending transaction:', transaction);
-
-        const result = await tonConnectUI.sendTransaction(transaction);
-        console.log('Transaction result:', result);
-
-        const transactionHash = result.boc;
-        const senderAddress = tonConnectUI.wallet.account.address;
-
-        const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
-        const webhookPayload = {
-          chat_id: chatId,
-          senderAddress: senderAddress,
-          recipientAddress: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-          amountInTon: amountInTon,
-          usdAmount: usdAmount,
-          transactionHash: transactionHash
-        };
-        console.log('Notifying webhook:', webhookPayload);
-
-        const webhookResponse = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
-        });
-
-        if (!webhookResponse.ok) {
-          const errorText = await webhookResponse.text();
-          throw new Error(`Webhook failed: ${webhookResponse.status} ${errorText}`);
+        if (!tonConnectUI) {
+          console.error('TON Connect UI not initialized');
+          alert('Wallet connection unavailable. Please refresh the page.');
+          return;
         }
 
-        console.log('Webhook notified');
-        alert('✅ Transaction sent! Check bot for confirmation.');
-      } catch (err) {
-        console.error('Transaction error:', err);
-        alert('❌ Transaction failed: ' + err.message);
-      } finally {
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
-        updateSignButton();
-      }
-    });
+        if (!tonConnectUI.wallet) {
+          alert('⚠ Please connect your wallet first.');
+          console.warn('No wallet connected');
+          return;
+        }
+
+        if (!tonPriceUsd) {
+          alert('⚠ TON price unavailable. Retry fetching price.');
+          console.warn('TON price unavailable');
+          return;
+        }
+
+        const usdAmount = 2.0;
+        const amountInTon = usdAmount / tonPriceUsd;
+        const amountNano = (amountInTon * 1e9).toString();
+        console.log(`Transaction: Sending ${amountInTon} TON = ${amountNano} nanoTON for $2 at $${tonPriceUsd}/TON`);
+
+        try {
+          signBtn.textContent = 'Signing...';
+          signBtn.disabled = true;
+
+          const transaction = {
+            validUntil: Math.floor(Date.now() / 1000) + 600,
+            messages: [
+              {
+                address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+                amount: amountNano,
+                payload: window.ton.TonWeb.utils.toBase64(`chat_id:${chatId}`)
+              }
+            ]
+          };
+          console.log('Sending transaction:', transaction);
+
+          const result = await tonConnectUI.sendTransaction(transaction);
+          console.log('Transaction result:', result);
+
+          const transactionHash = result.boc;
+          const senderAddress = tonConnectUI.wallet.account.address;
+
+          const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
+          const webhookPayload = {
+            chat_id: chatId,
+            senderAddress: senderAddress,
+            recipientAddress: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amountInTon: amountInTon,
+            usdAmount: usdAmount,
+            transactionHash: transactionHash
+          };
+          console.log('Notifying webhook:', webhookPayload);
+
+          const webhookResponse = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookPayload)
+          });
+
+          if (!webhookResponse.ok) {
+            const errorText = await webhookResponse.text();
+            throw new Error(`Webhook failed: ${webhookResponse.status} ${errorText}`);
+          }
+
+          console.log('Webhook notified');
+          alert('✅ Transaction sent! Check bot for confirmation.');
+        } catch (err) {
+          console.error('Transaction error:', err);
+          alert('❌ Transaction failed: ' + err.message);
+        } finally {
+          signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+          updateSignButton();
+        }
+      });
+    })();
   </script>
 </body>
 </html>
