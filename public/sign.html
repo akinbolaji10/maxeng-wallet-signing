@@ -6,7 +6,7 @@
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
-  <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
+  <script src="https://unpkg.com/buffer@5.7.1/index.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -145,9 +145,14 @@
           console.log('Address is already in user-friendly Base58 format:', address);
         } else {
           try {
-            const tonAddress = window.ton.TonWeb.Address.parse(address);
-            address = tonAddress.toString({ bounceable: true, urlSafe: true });
-            console.log('Converted address to user-friendly format:', address);
+            // Attempt to parse the address using window.ton.Address (if available)
+            if (window.ton && window.ton.Address) {
+              const tonAddress = window.ton.Address.parse(address);
+              address = tonAddress.toString({ bounceable: true, urlSafe: true });
+              console.log('Converted address to user-friendly format:', address);
+            } else {
+              throw new Error('window.ton.Address not available');
+            }
           } catch (err) {
             console.error('Failed to convert address format:', err);
             if (wallet.account?.publicKey) {
@@ -159,7 +164,10 @@
                 console.log('Derived address from public key:', address);
               } catch (err) {
                 console.error('Failed to derive address from public key:', err);
+                address = `Raw: ${address}`; // Display raw address with prefix if conversion fails
               }
+            } else {
+              address = `Raw: ${address}`; // Display raw address with prefix if no public key
             }
           }
         }
