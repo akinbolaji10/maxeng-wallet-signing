@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.coingecko.com https://maxeng-webhook-server.onrender.com;">
+  <meta http-equiv="X-Frame-Options" content="DENY">
   <title>Sign TON Transaction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@tonconnect/ui@2.0.6/dist/tonconnect-ui.min.js"></script>
   <style>
     * {
@@ -46,6 +49,7 @@
     }
     #ton-connect {
       margin: 20px 0;
+      min-height: 40px;
     }
     button {
       padding: 12px 24px;
@@ -74,6 +78,16 @@
       color: #ccc;
       min-height: 20px;
     }
+    .loader {
+      border: 2px solid #00bfff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 5px;
+    }
     .footer {
       position: fixed;
       bottom: 20px;
@@ -91,6 +105,10 @@
       50% { opacity: 1; }
       100% { opacity: 0.7; }
     }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
     @media (max-width: 500px) {
       h1 { font-size: 1.5rem; }
       .info { font-size: 0.8rem; }
@@ -104,8 +122,8 @@
     <h1>Sign $2 TON Transaction</h1>
     <div class="info">Send $2 worth of TON to MaxEng's wallet</div>
     <div id="ton-connect"></div>
-    <button id="signBtn" disabled>Sign Transaction</button>
-    <div class="status" id="status">Connecting...</div>
+    <button id="signBtn" disabled aria-label="Sign TON Transaction">Sign Transaction</button>
+    <div class="status" id="status">Initializing<span class="loader"></span></div>
   </div>
   <div class="footer">🔒 Powered by Gigi Labs</div>
 
@@ -119,46 +137,61 @@
     const statusDiv = document.getElementById('status');
     const toAddress = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
 
+    let cachedPrice = null;
+    let lastPriceFetch = 0;
+
     tonConnectUI.onStatusChange(wallet => {
       if (wallet) {
         signBtn.disabled = false;
-        statusDiv.textContent = `Connected: ${wallet.device.appName}`;
+        statusDiv.innerHTML = `Connected: ${wallet.device.appName}`;
       } else {
         signBtn.disabled = true;
-        statusDiv.textContent = 'Please connect your TON Wallet';
+        statusDiv.innerHTML = 'Please connect your TON Wallet';
       }
     });
 
     async function getTonPrice() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd', {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const tonPrice = data.toncoin.usd;
-        return { ton: (2 / tonPrice).toFixed(6), usd: tonPrice };
-      } catch (err) {
-        statusDiv.textContent = '❌ Failed to fetch TON price';
-        throw err;
+      const now = Date.now();
+      if (cachedPrice && now - lastPriceFetch < 60000) { // Cache for 1 minute
+        return cachedPrice;
+      }
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd', {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const tonPrice = data.toncoin.usd;
+          cachedPrice = { ton: (2 / tonPrice).toFixed(6), usd: tonPrice };
+          lastPriceFetch = now;
+          return cachedPrice;
+        } catch (err) {
+          if (attempt === 3) {
+            statusDiv.innerHTML = '❌ Failed to fetch TON price';
+            throw err;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
     }
 
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI.wallet) {
-        statusDiv.textContent = '❌ Please connect your TON Wallet';
+        statusDiv.innerHTML = '❌ Please connect your TON Wallet';
         return;
       }
 
       signBtn.disabled = true;
-      statusDiv.textContent = 'Fetching TON price...';
+      statusDiv.innerHTML = 'Fetching TON price...<span class="loader"></span>';
 
       try {
         const { ton: tonAmount, usd: tonPrice } = await getTonPrice();
         const tonInNano = Math.floor(parseFloat(tonAmount) * 1e9);
         const user_id = new URLSearchParams(window.location.search).get('user_id') || 'anonymous';
 
-        statusDiv.textContent = 'Awaiting transaction approval...';
+        statusDiv.innerHTML = 'Awaiting transaction approval...<span class="loader"></span>';
 
         const result = await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 600,
@@ -168,7 +201,7 @@
           }]
         });
 
-        statusDiv.textContent = '✅ Transaction sent! Notifying server...';
+        statusDiv.innerHTML = '✅ Transaction sent! Notifying server...<span class="loader"></span>';
 
         const webhookRes = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
@@ -182,11 +215,14 @@
           })
         });
 
-        if (!webhookRes.ok) throw new Error(`Webhook failed: HTTP ${webhookRes.status}`);
+        if (!webhookRes.ok) {
+          const errorData = await webhookRes.json();
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookRes.status}`);
+        }
 
-        statusDiv.textContent = '✅ Transaction logged! Telegram notified.';
+        statusDiv.innerHTML = '✅ Transaction logged! Telegram notified.';
       } catch (err) {
-        statusDiv.textContent = `❌ Error: ${err.message}`;
+        statusDiv.innerHTML = `❌ Error: ${err.message}`;
         console.error(err);
       } finally {
         signBtn.disabled = false;
