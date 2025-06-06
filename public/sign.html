@@ -9,16 +9,16 @@
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <style>
     body {
-      font-family: 'Anime Ace', 'Arial', sans-serif; /* Anime-inspired font */
+      font-family: 'Anime Ace', 'Arial', sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #ff9dd9, #9de1ff); /* Pastel anime gradient */
+      background: linear-gradient(135deg, #ff9dd9, #9de1ff); /* Anime pastel gradient */
       color: #fff;
-      overflow: hidden; /* Prevent scrollbars from animations */
+      overflow: hidden;
       position: relative;
     }
     h2 {
@@ -27,17 +27,17 @@
       font-weight: bold;
       text-align: center;
       color: #fff;
-      text-shadow: 0 0 10px #ff4081; /* Anime-style glow */
+      text-shadow: 0 0 10px #ff4081;
       position: relative;
       z-index: 10;
     }
     button {
       width: 250px;
       padding: 10px;
-      margin: 2px 0;
+      margin: 10px 0;
       font-size: 16px;
       font-weight: bold;
-      border: 2px solid #ff4081; /* Pink anime border */
+      border: 2px solid #ff4081;
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.2);
       color: #fff;
@@ -50,7 +50,7 @@
       z-index: 10;
     }
     #connectWalletBtn::before {
-      content: '✨'; /* Sparkle emoji for anime flair */
+      content: '✨';
       margin-right: 10px;
       font-size: 16px;
       color: #fff;
@@ -97,26 +97,17 @@
     .hidden {
       display: none;
     }
-    /* Anime Character Animations */
-    .character-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1; /* Behind UI */
-      pointer-events: none; /* Prevent interaction */
-    }
-    .anime-character {
+    /* Character Animations */
+    .character {
       position: absolute;
       width: 40px;
       height: 60px;
       background: transparent;
-      animation: walk linear infinite, bob 1s ease-in-out infinite;
       will-change: transform;
+      z-index: 1; /* Behind UI */
     }
-    /* Simple chibi-style character using pseudo-elements */
-    .anime-character::before {
+    /* Chibi-style character using pseudo-elements */
+    .character::before {
       content: '';
       position: absolute;
       top: 0;
@@ -127,7 +118,7 @@
       border-radius: 50%;
       box-shadow: 0 0 5px #0003;
     }
-    .anime-character::after {
+    .character::after {
       content: '';
       position: absolute;
       top: 20px;
@@ -138,65 +129,27 @@
       border-radius: 5px;
       box-shadow: 0 0 5px #0003;
     }
-    @keyframes walk {
-      0% { transform: translateX(-100vw); }
-      100% { transform: translateX(100vw); }
+    .flipped {
+      transform: scaleX(-1);
     }
-    @keyframes bob {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+    .kunai, .punch {
+      position: absolute;
+      font-size: 16px;
+      animation: attackMove 1s linear forwards;
+      z-index: 2; /* Above characters but below UI */
     }
-    /* Individual character variations (position, speed, color) */
-    .anime-character:nth-child(1) { top: 10%; animation-duration: 12s; animation-delay: 0s; }
-    .anime-character:nth-child(2) { top: 15%; animation-duration: 10s; animation-delay: 1s; }
-    .anime-character:nth-child(3) { top: 20%; animation-duration: 14s; animation-delay: 2s; }
-    .anime-character:nth-child(4) { top: 25%; animation-duration: 11s; animation-delay: 0.5s; }
-    .anime-character:nth-child(5) { top: 30%; animation-duration: 13s; animation-delay: 3s; }
-    .anime-character:nth-child(6) { top: 35%; animation-duration: 9s; animation-delay: 1.5s; }
-    .anime-character:nth-child(7) { top: 40%; animation-duration: 15s; animation-delay: 4s; }
-    .anime-character:nth-child(8) { top: 45%; animation-duration: 10s; animation-delay: 2.5s; }
-    .anime-character:nth-child(9) { top: 50%; animation-duration: 12s; animation-delay: 0s; }
-    .anime-character:nth-child(10) { top: 55%; animation-duration: 11s; animation-delay: 3.5s; }
-    .anime-character:nth-child(11) { top: 60%; animation-duration: 13s; animation-delay: 1s; }
-    .anime-character:nth-child(12) { top: 65%; animation-duration: 14s; animation-delay: 2s; }
-    .anime-character:nth-child(13) { top: 70%; animation-duration: 9s; animation-delay: 4.5s; }
-    .anime-character:nth-child(14) { top: 75%; animation-duration: 10s; animation-delay: 0.5s; }
-    .anime-character:nth-child(15) { top: 80%; animation-duration: 12s; animation-delay: 3s; }
-    .anime-character:nth-child(16) { top: 85%; animation-duration: 11s; animation-delay: 1.5s; }
-    .anime-character:nth-child(17) { top: 90%; animation-duration: 13s; animation-delay: 2.5s; }
-    .anime-character:nth-child(18) { top: 12%; animation-duration: 15s; animation-delay: 4s; }
-    .anime-character:nth-child(19) { top: 18%; animation-duration: 10s; animation-delay: 0s; }
-    .anime-character:nth-child(20) { top: 22%; animation-duration: 14s; animation-delay: 3.5s; }
+    @keyframes attackMove {
+      0% { transform: translateX(0); opacity: 1; }
+      100% { transform: translateX(100px); opacity: 0; }
+    }
     /* Vary character appearance */
-    .anime-character:nth-child(odd)::after { background: linear-gradient(#9de1ff, #00d4ff); }
-    .anime-character:nth-child(4n)::before { background: #ffd700; } /* Different hair color */
-    .anime-character:nth-child(3n)::after { border-radius: 10px; } /* Different dress shape */
+    .character:nth-child(odd)::after { background: linear-gradient(#9de1ff, #00d4ff); }
+    .character:nth-child(4n)::before { background: #ffd700; } /* Different hair color */
+    .character:nth-child(3n)::after { border-radius: 10px; } /* Different dress shape */
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Anime+Ace&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="character-container">
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-    <div class="anime-character"></div>
-  </div>
   <h2>Connect Your TON Wallet</h2>
   <button id="connectWalletBtn">Connect Wallet</button>
   <div id="walletInfo" class="hidden"></div>
@@ -205,21 +158,56 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
+  <!-- === ANIMATED CHARACTERS SCRIPT === -->
   <script>
-    // --- Address conversion logic (TON user-friendly format only) ---
+    const totalCharacters = 30;
+
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    for (let i = 0; i < totalCharacters; i++) {
+      const char = document.createElement('div'); // Changed from <img> to <div>
+      char.className = 'character';
+      char.style.top = random(0, window.innerHeight - 60) + 'px'; // Adjusted for new character height
+      char.style.left = random(0, window.innerWidth - 40) + 'px';
+      document.body.appendChild(char);
+
+      setInterval(() => {
+        const newX = random(0, window.innerWidth - 40);
+        const newY = random(0, window.innerHeight - 60);
+        const flip = newX < parseFloat(char.style.left);
+        char.style.transform = `translate(${newX - parseFloat(char.style.left)}px, ${newY - parseFloat(char.style.top)}px)${flip ? ' scaleX(-1)' : ''}`;
+        char.style.top = newY + 'px';
+        char.style.left = newX + 'px';
+        char.classList.toggle('flipped', flip);
+      }, random(3000, 7000));
+
+      setInterval(() => {
+        const attack = document.createElement('div');
+        attack.className = Math.random() > 0.5 ? 'kunai' : 'punch';
+        attack.textContent = attack.className === 'kunai' ? '🔪' : '💥';
+        attack.style.left = (parseFloat(char.style.left) + (char.classList.contains('flipped') ? -20 : 40)) + 'px'; /* Adjust for direction */
+        attack.style.top = (parseFloat(char.style.top) + 20) + 'px'; /* Align with character height */
+        document.body.appendChild(attack);
+        setTimeout(() => attack.remove(), 1000);
+      }, random(5000, 9000));
+    }
+  </script>
+
+  <!-- === TON LOGIC === -->
+  <script>
+    // Address conversion logic (TON user-friendly format only)
     function toUserFriendlyAddress(address) {
-      // If already user-friendly, return as is
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
-        // Try parsing as raw address using TON SDK
         return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
       } catch (e) {
-        // fallback: just return original if parsing fails
         return address;
       }
     }
 
-    // --- Wait for TON SDK to be ready ---
+    // Wait for TON SDK to be ready
     function onTonReady(callback) {
       function check() {
         if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
@@ -231,7 +219,7 @@
       check();
     }
 
-    // --- Standard logic below (untouched except for address display) ---
+    // Standard logic
     let tonConnectUI;
     let tonPriceUsd = null;
     try {
@@ -272,11 +260,9 @@
 
     function updateWalletUI(wallet) {
       if (wallet) {
-        // Always hide Connect Wallet and show Disconnect
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        // Address conversion (may be async)
         let address = wallet.account?.address || 'Unknown Address';
         onTonReady(() => {
           address = toUserFriendlyAddress(address);
@@ -400,12 +386,10 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        // Ensure sender address is user-friendly for backend
         let senderAddress = walletInfo.account.address;
-        await new Promise(res => onTonReady(res)); // Ensure TON SDK loaded
+        await new Promise(res => onTonReady(res));
         senderAddress = toUserFriendlyAddress(senderAddress);
 
-        // Webhook notification (unchanged)
         const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
         const webhookPayload = {
           user_id: chatId,
