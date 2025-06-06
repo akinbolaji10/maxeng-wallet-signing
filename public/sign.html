@@ -94,28 +94,9 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
-    function toUserFriendlyAddress(address) {
-      if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
-      try {
-        return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
-      } catch {
-        return address;
-      }
-    }
-
-    function onTonReady(callback) {
-      function check() {
-        if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
-          callback();
-        } else {
-          setTimeout(check, 50);
-        }
-      }
-      check();
-    }
-
     let tonConnectUI;
     let tonPriceUsd = null;
+
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
@@ -149,18 +130,15 @@
       }
     }
 
+    // ✅ Display full connected wallet address (no label)
     function updateWalletUI(wallet) {
       if (wallet) {
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        walletInfoDiv.textContent = 'Loading address...';
 
-        let address = wallet.account?.address || 'Unknown Address';
-        onTonReady(() => {
-          const userFriendly = toUserFriendlyAddress(address);
-          walletInfoDiv.textContent = userFriendly; // ✅ Full address shown here
-        });
+        const address = wallet.account?.address || 'Unknown';
+        walletInfoDiv.textContent = address;
       } else {
         connectWalletBtn.classList.remove('hidden');
         disconnectWalletBtn.classList.add('hidden');
@@ -171,12 +149,10 @@
     }
 
     if (tonConnectUI) {
-      tonConnectUI.onStatusChange((wallet) => {
-        onTonReady(() => updateWalletUI(wallet));
-      });
+      tonConnectUI.onStatusChange((wallet) => updateWalletUI(wallet));
       (async () => {
         const wallet = tonConnectUI.wallet;
-        onTonReady(() => updateWalletUI(wallet));
+        updateWalletUI(wallet);
       })();
     }
 
@@ -225,7 +201,6 @@
 
     updatePrice();
     setInterval(updatePrice, 86400000);
-
     retryPriceBtn.addEventListener('click', updatePrice);
 
     signBtn.addEventListener('click', async () => {
@@ -254,7 +229,7 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        let senderAddress = toUserFriendlyAddress(walletInfo.account.address);
+        const senderAddress = walletInfo.account?.address || 'Unknown';
 
         await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
