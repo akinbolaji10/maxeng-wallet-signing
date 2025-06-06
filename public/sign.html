@@ -133,21 +133,24 @@
       }
     }
 
+    // === FIX: Always show user-friendly TON address in walletInfo ===
     function updateWalletUI(wallet) {
       if (wallet) {
         let address = wallet.account?.address || 'Unknown Address';
-        // If not user-friendly, try parsing
-        if (!/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
+        // If not user-friendly, convert from raw to user-friendly address
+        if (!/^[UE][QF][A-Za-z0-9_-]{48}$/.test(address)) {
           try {
-            const tonAddress = window.ton.Address.parse(address);
+            // Try parse as raw (hex) address and convert to user-friendly
+            const tonAddress = window.ton.Address.parseRaw(address);
             address = tonAddress.toString({ bounceable: true, urlSafe: true });
           } catch (err) {
+            // Fallback: try from publicKey if available
             if (wallet.account?.publicKey) {
               try {
                 const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
                 const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
                 address = walletContract.address.toString({ bounceable: true, urlSafe: true });
-              } catch (err) {}
+              } catch (err2) {}
             }
           }
         }
@@ -239,7 +242,7 @@
       updatePrice();
     });
 
-    // FIXED SIGN BUTTON HANDLER
+    // SIGN BUTTON HANDLER
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI) {
         alert('Wallet connection not available. Please refresh the page.');
