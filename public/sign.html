@@ -95,11 +95,10 @@
 
   <script>
     function toUserFriendlyAddress(address) {
-      // If already user-friendly, return as is
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
         return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
-      } catch (e) {
+      } catch {
         return address;
       }
     }
@@ -134,7 +133,6 @@
     const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
 
-    // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
     if (!chatId || chatId === 'anonymous') {
@@ -153,23 +151,25 @@
       }
     }
 
-    // Only the address, no label, no ...
+    // ✅ FIXED: Shows user-friendly address (truncated for UI)
     function updateWalletUI(wallet) {
-      if (wallet && wallet.account && wallet.account.address) {
+      if (wallet) {
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        walletInfoDiv.textContent = "..."; // temporary
-        const rawAddress = wallet.account.address;
+
+        let address = wallet.account?.address || 'Unknown Address';
+        walletInfoDiv.textContent = 'Loading address...';
+
         onTonReady(() => {
-          const friendly = toUserFriendlyAddress(rawAddress);
-          walletInfoDiv.textContent = friendly;
+          const friendly = toUserFriendlyAddress(address);
+          walletInfoDiv.textContent = friendly.slice(0, 6) + '...' + friendly.slice(-4); // Short format
         });
       } else {
         connectWalletBtn.classList.remove('hidden');
         disconnectWalletBtn.classList.add('hidden');
-        walletInfoDiv.textContent = '';
         walletInfoDiv.classList.add('hidden');
+        walletInfoDiv.textContent = '';
       }
       updateSignButton();
     }
@@ -283,12 +283,11 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        // Ensure sender address is user-friendly for backend
+
         let senderAddress = walletInfo.account.address;
-        await new Promise(res => onTonReady(res)); // Ensure TON SDK loaded
+        await new Promise(res => onTonReady(res));
         senderAddress = toUserFriendlyAddress(senderAddress);
 
-        // Webhook notification (unchanged)
         const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
         const webhookPayload = {
           user_id: chatId,
