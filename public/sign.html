@@ -16,7 +16,7 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #ffffff, #e6f0fa);
+      background: linear-gradient(135deg, #e4f5fc, #bfe6d9);
       color: #000;
       overflow: hidden;
       position: relative;
@@ -26,7 +26,6 @@
       font-size: 36px;
       font-weight: bold;
       text-align: center;
-      color: #000;
     }
     button {
       width: 250px;
@@ -48,7 +47,6 @@
       content: '▶';
       margin-right: 10px;
       font-size: 16px;
-      color: #000;
     }
     button:hover {
       background: #f0f0f0;
@@ -58,21 +56,12 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
-    #walletInfo {
-      margin: 10px 0;
+    #walletInfo, #tonPriceDisplay {
       font-size: 14px;
       font-weight: bold;
-      color: #000;
-      word-break: break-all;
       text-align: center;
-      max-width: 250px;
-    }
-    #tonPriceDisplay {
       margin: 10px 0;
-      font-size: 14px;
-      font-weight: bold;
-      color: #000;
-      text-align: center;
+      word-break: break-word;
       max-width: 250px;
     }
     #retryPriceBtn {
@@ -84,26 +73,28 @@
     .hidden {
       display: none;
     }
-    .character {
+
+    /* Floating Leaf Effect */
+    .leaf {
       position: absolute;
       width: 32px;
-      height: 48px;
-      will-change: transform;
-      transition: transform 1s linear;
-      z-index: 1;
+      height: 32px;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23382f1e' d='M32 0C14 18 0 42 16 58c12 12 46 2 46-22C62 14 50 2 32 0z'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      animation: floatLeaf linear infinite;
+      opacity: 0.8;
+      pointer-events: none;
     }
-    .flipped {
-      transform: scaleX(-1);
-    }
-    .kunai, .punch {
-      position: absolute;
-      font-size: 16px;
-      animation: attackMove 1s linear forwards;
-      z-index: 2;
-    }
-    @keyframes attackMove {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100px); opacity: 0; }
+    @keyframes floatLeaf {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -116,46 +107,211 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
-  <!-- === ANIMATED CHARACTERS SCRIPT === -->
+  <!-- Floating Leaves Script -->
   <script>
-    const totalCharacters = 20;
-    const narutoSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABMXPacAAABh0lEQVR4nO2WTU4DMRCGP89zBI1MgAH0IQNISkBRMEFQ0SAF0EUICehJEgJ2CEIpA2eOLrjFFLaTxq07e+aU+Rz/v1u7W1tba09X5QQAyfCzCCKHGMpyfGgLFEOIRB6ivXGM9XHKwcEzP1iiy9Y4KHGMp2eCwgWsv2Q5KIQBHqKfY+PSoY4f1/fZ9Uwl+9HcwjV4W1pCKGvS9gzSrgyQ/KeP1H+dOggBeLBKykgfYjNeBGXAjf+RkSgK2mAo7gIuI5bH0WrIRYURaaDk9zsoB2NbgzUQDW9dhfa+CUBFwA60OYnrk6SVsOgPZz4c5+EXDXQLAQ+wtpJyxDoGjV1h2gK6F5TDKPy9ccq6rfdHxALuf07xFoC2kU9qDIlxKc5nTYHlQlA/NKnLO6RWg+V91QkAHSoQk8NsTJ9dbHGH9dD4WlQUxMrfvc5fymwr+qzDTRAAAAAElFTkSuQmCC";
-    const ippoSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABMXPacAAABiUlEQVR4nO2WTUoDQRCG39pBEIWoApVQ0rAVREPgLgJSAQXgAaAgkZMgAHUAl0JAQZIE1IAeJNZnrHyjO9qTLzJnC7Lv7u+v7eygAhjN1jj2HK9SiGEMqRCEL4t2DG93JbwZkSMzfhNU3nIsrBFkk5EGPfwngDNj9CKKiOkiAX8DZgX3RTZjATxHGo5H1MPAZzVHLkk0TFeAaQkAmhPO5zXhrqvl8JhTKijClPIAE+xGEC0YMK1hNVTDGgnvm7GE2RMGhEm8Xym7whV6FcAxFr2A8xEP2XMm8zvhAOdM2scj++WI+B12FYgo6FnZhrAnKgAR9+yKDOP1IDRm7cGo7QIEVUdOmzIG5JUb7HKhz5eVmjIddMZBv9J9ZDKyfkf7Xw/3raU9Iit+z9gAAAABJRU5ErkJggg==";
-
-    function random(min, max) {
-      return Math.random() * (max - min) + min;
-    }
-
-    for (let i = 0; i < totalCharacters; i++) {
-      const char = document.createElement('img');
-      char.src = i % 2 === 0 ? narutoSrc : ippoSrc;
-      char.className = 'character';
-      char.style.top = random(0, window.innerHeight - 48) + 'px';
-      char.style.left = random(0, window.innerWidth - 32) + 'px';
-      document.body.appendChild(char);
-
-      setInterval(() => {
-        const newX = random(0, window.innerWidth - 32);
-        const newY = random(0, window.innerHeight - 48);
-        const flip = newX < parseFloat(char.style.left);
-        char.style.top = newY + 'px';
-        char.style.left = newX + 'px';
-        char.classList.toggle('flipped', flip);
-      }, random(3000, 7000));
-
-      setInterval(() => {
-        const attack = document.createElement('div');
-        attack.className = Math.random() > 0.5 ? 'kunai' : 'punch';
-        attack.textContent = attack.className === 'kunai' ? '🔪' : '💥';
-        attack.style.left = (parseFloat(char.style.left) + (char.classList.contains('flipped') ? -16 : 32)) + 'px';
-        attack.style.top = (parseFloat(char.style.top) + 16) + 'px';
-        document.body.appendChild(attack);
-        setTimeout(() => attack.remove(), 1000);
-      }, random(5000, 9000));
+    const numberOfLeaves = 25;
+    for (let i = 0; i < numberOfLeaves; i++) {
+      const leaf = document.createElement('div');
+      leaf.classList.add('leaf');
+      leaf.style.left = Math.random() * 100 + 'vw';
+      leaf.style.top = -Math.random() * 100 + 'px';
+      leaf.style.animationDuration = (5 + Math.random() * 10) + 's';
+      leaf.style.animationDelay = Math.random() * 5 + 's';
+      document.body.appendChild(leaf);
     }
   </script>
 
-  <!-- === TON CONNECT SCRIPT === -->
-  <!-- Keep your TON logic here (already working) -->
+  <!-- TON Wallet Logic -->
+  <script>
+    function toUserFriendlyAddress(address) {
+      if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
+      try {
+        return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
+      } catch (e) {
+        return address;
+      }
+    }
+
+    function onTonReady(callback) {
+      function check() {
+        if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
+          callback();
+        } else {
+          setTimeout(check, 50);
+        }
+      }
+      check();
+    }
+
+    let tonConnectUI;
+    let tonPriceUsd = null;
+
+    try {
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+      });
+    } catch (err) {
+      alert('Failed to initialize wallet connection. Please refresh.');
+    }
+
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+    const walletInfoDiv = document.getElementById('walletInfo');
+    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+    const retryPriceBtn = document.getElementById('retryPriceBtn');
+    const signBtn = document.getElementById('signBtn');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
+    if (!chatId || chatId === 'anonymous') {
+      alert('chat_id not found in URL. Access via /subscribe in Telegram.');
+      signBtn.disabled = true;
+    }
+
+    function updateSignButton() {
+      const wallet = tonConnectUI?.wallet;
+      if (wallet && tonPriceUsd && chatId) {
+        signBtn.disabled = false;
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+      } else {
+        signBtn.disabled = true;
+        signBtn.textContent = 'Sign $2 TON Transaction';
+      }
+    }
+
+    function updateWalletUI(wallet) {
+      if (wallet) {
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+        walletInfoDiv.classList.remove('hidden');
+        let address = wallet.account?.address || 'Unknown Address';
+        onTonReady(() => {
+          address = toUserFriendlyAddress(address);
+          walletInfoDiv.textContent = address;
+        });
+      } else {
+        connectWalletBtn.classList.remove('hidden');
+        disconnectWalletBtn.classList.add('hidden');
+        walletInfoDiv.classList.add('hidden');
+        walletInfoDiv.textContent = '';
+      }
+      updateSignButton();
+    }
+
+    if (tonConnectUI) {
+      tonConnectUI.onStatusChange(wallet => updateWalletUI(wallet));
+      (async () => {
+        try {
+          const wallet = tonConnectUI.wallet;
+          updateWalletUI(wallet);
+        } catch {}
+      })();
+    }
+
+    connectWalletBtn.addEventListener('click', async () => {
+      try {
+        connectWalletBtn.textContent = 'Connecting...';
+        await tonConnectUI.connectWallet();
+      } catch {
+        alert('Connection failed or cancelled.');
+      } finally {
+        connectWalletBtn.textContent = 'Connect Wallet';
+      }
+    });
+
+    disconnectWalletBtn.addEventListener('click', async () => {
+      try {
+        await tonConnectUI.disconnect();
+      } catch {
+        alert('Failed to disconnect.');
+      }
+    });
+
+    async function getTonPriceFromCoinGecko() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        const data = await res.json();
+        return data['the-open-network']?.usd || null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function updatePrice() {
+      tonPriceDisplay.textContent = 'Fetching TON price...';
+      retryPriceBtn.classList.add('hidden');
+      const price = await getTonPriceFromCoinGecko();
+      if (price) {
+        tonPriceUsd = price;
+        tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+      } else {
+        tonPriceUsd = null;
+        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
+        retryPriceBtn.classList.remove('hidden');
+      }
+      updateSignButton();
+    }
+
+    updatePrice();
+    setInterval(updatePrice, 86400000);
+    retryPriceBtn.addEventListener('click', updatePrice);
+
+    signBtn.addEventListener('click', async () => {
+      if (!tonConnectUI || !tonConnectUI.wallet) {
+        alert('Please connect your wallet first.');
+        return;
+      }
+      if (!tonPriceUsd) {
+        alert('TON price not available.');
+        return;
+      }
+
+      const usdAmount = 2.0;
+      const amountInTon = usdAmount / tonPriceUsd;
+      const amountNano = Math.floor(amountInTon * 1e9);
+
+      try {
+        signBtn.textContent = 'Signing...';
+        signBtn.disabled = true;
+
+        const transaction = {
+          validUntil: Math.floor(Date.now() / 1000) + 600,
+          messages: [
+            {
+              address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+              amount: amountNano.toString(),
+              comment: `chat_id:${chatId}`
+            }
+          ]
+        };
+
+        const result = await tonConnectUI.sendTransaction(transaction);
+        let senderAddress = tonConnectUI.wallet.account.address;
+        await new Promise(res => onTonReady(res));
+        senderAddress = toUserFriendlyAddress(senderAddress);
+
+        const webhookResponse = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: chatId,
+            user: senderAddress,
+            to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amount: amountNano,
+            usd: `$${tonPriceUsd.toFixed(2)}`,
+            transactionHash: result.boc
+          })
+        });
+
+        if (!webhookResponse.ok) throw new Error('Webhook failed');
+
+        alert('✅ Transaction sent and logged successfully!');
+      } catch (err) {
+        alert('❌ Transaction failed: ' + (err.message || err));
+      } finally {
+        updateSignButton();
+      }
+    });
+  </script>
 </body>
 </html>
