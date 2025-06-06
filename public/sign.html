@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self'; connect-src 'self' https://api.coingecko.com https://maxengbot.onrender.com;">
+  <meta http-equiv="X-Frame-Options" content="DENY">
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
@@ -43,7 +45,7 @@
       transition: background 0.3s;
     }
     #connectWalletBtn::before {
-      content: '';
+      content: '▶';
       margin-right: 10px;
       font-size: 16px;
       color: #000;
@@ -116,9 +118,9 @@
 
     // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chat_id');
+    const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
     if (!chatId) {
-      alert('Error: chat_id not found in URL. Please access via /subscribe in Telegram.');
+      alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
       signBtn.disabled = true;
     }
 
@@ -205,10 +207,10 @@
       try {
         connectWalletBtn.textContent = 'Connecting...';
         await tonConnectUI.connectWallet();
-        console.log(' Wallet connected successfully!');
+        console.log('✅ Wallet connected successfully!');
       } catch (err) {
         console.error('Wallet connection error:', err);
-        alert(' Wallet connection failed or was cancelled.');
+        alert('❌ Wallet connection failed or was cancelled.');
       } finally {
         connectWalletBtn.textContent = 'Connect Wallet';
       }
@@ -222,10 +224,10 @@
       }
       try {
         await tonConnectUI.disconnect();
-        console.log(' Wallet disconnected successfully!');
+        console.log('✅ Wallet disconnected successfully!');
       } catch (err) {
         console.error('Disconnect error:', err);
-        alert(' Failed to disconnect wallet.');
+        alert('❌ Failed to disconnect wallet.');
       }
     });
 
@@ -266,9 +268,9 @@
         updateSignButton();
       } else {
         tonPriceUsd = null;
-        tonPriceDisplay.textContent = ' Failed to load TON price.';
+        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
         retryPriceBtn.classList.remove('hidden');
-        console.log(' Failed to load live price. Please retry or check your internet connection.');
+        console.log('⚠ Failed to load live price. Please retry or check your internet connection.');
         updateSignButton();
       }
     }
@@ -294,12 +296,12 @@
 
       const walletInfo = await tonConnectUI.getWallet();
       if (!walletInfo) {
-        alert(' Please connect your wallet first.');
+        alert('⚠ Please connect your wallet first.');
         return;
       }
 
       if (!tonPriceUsd) {
-        alert(' TON price not available. Please retry fetching the price.');
+        alert('⚠ TON price not available. Please retry fetching the price.');
         return;
       }
 
@@ -330,13 +332,14 @@
         const transactionHash = result.boc;
         const senderAddress = walletInfo.account.address;
 
+        // Webhook notification (adapted from second script)
         const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
         const webhookPayload = {
-          chat_id: chatId,
-          senderAddress: senderAddress,
-          recipientAddress: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-          amountInTon: amountInTon,
-          usdAmount: usdAmount,
+          user_id: chatId, // Using chatId as user_id for compatibility
+          user: senderAddress,
+          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+          amount: amountNano,
+          usd: `$${tonPriceUsd.toFixed(2)}`,
           transactionHash: transactionHash
         };
         console.log('Notifying webhook with payload:', webhookPayload);
@@ -348,14 +351,14 @@
         });
 
         if (!webhookResponse.ok) {
-          const errorText = await webhookResponse.text();
-          throw new Error(`Webhook notification failed: ${webhookResponse.status} ${errorText}`);
+          const errorData = await webhookResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
         }
 
-        alert(' Transaction sent successfully! Check the bot for confirmation.');
+        alert('✅ Transaction sent successfully! Telegram notified.');
       } catch (err) {
         console.error('Transaction error:', err);
-        alert(' Transaction failed or cancelled: ' + err.message);
+        alert('❌ Transaction failed or cancelled: ' + err.message);
       } finally {
         signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
         updateSignButton();
@@ -364,4 +367,3 @@
   </script>
 </body>
 </html>
-
