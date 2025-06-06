@@ -16,85 +16,140 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #e4f5fc, #bfe6d9);
-      color: #000;
+      /* Updated background: Night sky gradient */
+      background: linear-gradient(135deg, #1a2a6c, #000428);
+      color: #fff; /* White text for better contrast */
       overflow: hidden;
       position: relative;
     }
+
+    /* Starry Night Sky Animation */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 0; /* Behind UI */
+      pointer-events: none; /* Prevent interaction with background */
+      /* Add stars as background with animation */
+      background-image: 
+        radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 80px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 90px 40px, #ddd, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 100px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 160px 60px, #eee, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 200px 120px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 240px 70px, #ddd, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 280px 90px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 320px 50px, #eee, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 360px 110px, #fff, rgba(0,0,0,0));
+      background-repeat: repeat;
+      animation: twinkle 5s infinite;
+    }
+
+    /* Twinkle animation for stars */
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Semi-transparent overlay to ensure UI visibility */
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3); /* Slight dark overlay */
+      z-index: 1; /* Behind UI, above stars */
+      pointer-events: none;
+    }
+
     h2 {
       margin-bottom: 20px;
       font-size: 36px;
       font-weight: bold;
       text-align: center;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Shadow for readability */
+      z-index: 2; /* Above overlay */
+      position: relative;
     }
+
     button {
       width: 250px;
       padding: 10px;
       margin: 10px 0;
       font-size: 16px;
       font-weight: bold;
-      border: 2px solid #000;
+      border: 2px solid #fff; /* White border for contrast */
       border-radius: 8px;
-      background: none;
-      color: #000;
+      background: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
+      color: #fff; /* White text */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.3s;
+      z-index: 2; /* Above overlay */
+      position: relative;
     }
+
     #connectWalletBtn::before {
       content: '▶';
       margin-right: 10px;
       font-size: 16px;
+      color: #fff; /* White icon */
     }
+
     button:hover {
-      background: #f0f0f0;
+      background: rgba(255, 255, 255, 0.3); /* Lighten on hover */
     }
+
     button:disabled {
-      background: #e0e0e0;
+      background: rgba(255, 255, 255, 0.05);
       cursor: not-allowed;
       opacity: 0.6;
     }
-    #walletInfo, #tonPriceDisplay {
+
+    #walletInfo {
+      margin: 10px 0;
       font-size: 14px;
       font-weight: bold;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Shadow for readability */
+      word-break: break-all;
       text-align: center;
-      margin: 10px 0;
-      word-break: break-word;
       max-width: 250px;
+      z-index: 2; /* Above overlay */
+      position: relative;
     }
+
+    #tonPriceDisplay {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Shadow for readability */
+      text-align: center;
+      max-width: 250px;
+      z-index: 2; /* Above overlay */
+      position: relative;
+    }
+
     #retryPriceBtn {
       width: 150px;
       padding: 5px;
       font-size: 12px;
       margin-top: 5px;
     }
+
     .hidden {
       display: none;
-    }
-
-    /* Floating Leaf Effect */
-    .leaf {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23382f1e' d='M32 0C14 18 0 42 16 58c12 12 46 2 46-22C62 14 50 2 32 0z'/%3E%3C/svg%3E");
-      background-size: contain;
-      background-repeat: no-repeat;
-      animation: floatLeaf linear infinite;
-      opacity: 0.8;
-      pointer-events: none;
-    }
-    @keyframes floatLeaf {
-      0% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 0.8;
-      }
-      100% {
-        transform: translateY(100vh) rotate(360deg);
-        opacity: 0;
-      }
     }
   </style>
 </head>
@@ -107,22 +162,9 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
-  <!-- Floating Leaves Script -->
+  <!-- === TON LOGIC === -->
   <script>
-    const numberOfLeaves = 25;
-    for (let i = 0; i < numberOfLeaves; i++) {
-      const leaf = document.createElement('div');
-      leaf.classList.add('leaf');
-      leaf.style.left = Math.random() * 100 + 'vw';
-      leaf.style.top = -Math.random() * 100 + 'px';
-      leaf.style.animationDuration = (5 + Math.random() * 10) + 's';
-      leaf.style.animationDelay = Math.random() * 5 + 's';
-      document.body.appendChild(leaf);
-    }
-  </script>
-
-  <!-- TON Wallet Logic -->
-  <script>
+    // Address conversion logic (TON user-friendly format only)
     function toUserFriendlyAddress(address) {
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
@@ -132,6 +174,7 @@
       }
     }
 
+    // Wait for TON SDK to be ready
     function onTonReady(callback) {
       function check() {
         if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
@@ -143,15 +186,17 @@
       check();
     }
 
+    // Standard logic
     let tonConnectUI;
     let tonPriceUsd = null;
-
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
+      console.log('TON Connect UI initialized successfully');
     } catch (err) {
-      alert('Failed to initialize wallet connection. Please refresh.');
+      console.error('Failed to initialize TON Connect UI:', err);
+      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -161,10 +206,11 @@
     const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
 
+    // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
     if (!chatId || chatId === 'anonymous') {
-      alert('chat_id not found in URL. Access via /subscribe in Telegram.');
+      alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
       signBtn.disabled = true;
     }
 
@@ -199,7 +245,9 @@
     }
 
     if (tonConnectUI) {
-      tonConnectUI.onStatusChange(wallet => updateWalletUI(wallet));
+      tonConnectUI.onStatusChange((wallet) => {
+        updateWalletUI(wallet);
+      });
       (async () => {
         try {
           const wallet = tonConnectUI.wallet;
@@ -209,29 +257,39 @@
     }
 
     connectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
       try {
         connectWalletBtn.textContent = 'Connecting...';
         await tonConnectUI.connectWallet();
       } catch {
-        alert('Connection failed or cancelled.');
+        alert('Wallet connection failed or was cancelled.');
       } finally {
         connectWalletBtn.textContent = 'Connect Wallet';
       }
     });
 
     disconnectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) return;
       try {
         await tonConnectUI.disconnect();
       } catch {
-        alert('Failed to disconnect.');
+        alert('Failed to disconnect wallet.');
       }
     });
 
     async function getTonPriceFromCoinGecko() {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        return data['the-open-network']?.usd || null;
+        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) throw new Error();
+        return data['the-open-network'].usd;
       } catch {
         return null;
       }
@@ -240,32 +298,41 @@
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
       retryPriceBtn.classList.add('hidden');
-      const price = await getTonPriceFromCoinGecko();
+
+      let price = await getTonPriceFromCoinGecko();
       if (price) {
         tonPriceUsd = price;
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+        updateSignButton();
       } else {
         tonPriceUsd = null;
         tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
         retryPriceBtn.classList.remove('hidden');
+        updateSignButton();
       }
-      updateSignButton();
     }
 
     updatePrice();
-    setInterval(updatePrice, 86400000);
-    retryPriceBtn.addEventListener('click', updatePrice);
+    setInterval(updatePrice, 86400000); // 24h
+
+    retryPriceBtn.addEventListener('click', () => {
+      updatePrice();
+    });
 
     signBtn.addEventListener('click', async () => {
-      if (!tonConnectUI || !tonConnectUI.wallet) {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
+      const walletInfo = tonConnectUI.wallet;
+      if (!walletInfo) {
         alert('Please connect your wallet first.');
         return;
       }
       if (!tonPriceUsd) {
-        alert('TON price not available.');
+        alert('TON price not available. Please retry fetching the price.');
         return;
       }
-
       const usdAmount = 2.0;
       const amountInTon = usdAmount / tonPriceUsd;
       const amountNano = Math.floor(amountInTon * 1e9);
@@ -286,29 +353,36 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        let senderAddress = tonConnectUI.wallet.account.address;
+        let senderAddress = walletInfo.account.address;
         await new Promise(res => onTonReady(res));
         senderAddress = toUserFriendlyAddress(senderAddress);
 
-        const webhookResponse = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
+        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
+        const webhookPayload = {
+          user_id: chatId,
+          user: senderAddress,
+          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+          amount: amountNano,
+          usd: `$${tonPriceUsd.toFixed(2)}`,
+          transactionHash: result.boc
+        };
+
+        const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: chatId,
-            user: senderAddress,
-            to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-            amount: amountNano,
-            usd: `$${tonPriceUsd.toFixed(2)}`,
-            transactionHash: result.boc
-          })
+          body: JSON.stringify(webhookPayload)
         });
 
-        if (!webhookResponse.ok) throw new Error('Webhook failed');
+        if (!webhookResponse.ok) {
+          const errorData = await webhookResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
+        }
 
-        alert('✅ Transaction sent and logged successfully!');
+        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
       } catch (err) {
-        alert('❌ Transaction failed: ' + (err.message || err));
+        alert('❌ Transaction failed or cancelled: ' + (err.message || err));
       } finally {
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
         updateSignButton();
       }
     });
