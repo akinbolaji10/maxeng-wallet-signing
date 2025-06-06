@@ -9,15 +9,15 @@
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <style>
     body {
-      font-family: 'Anime Ace', 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #ff9dd9, #9de1ff); /* Anime pastel gradient */
-      color: #fff;
+      background: linear-gradient(135deg, #ffffff, #e6f0fa);
+      color: #000;
       overflow: hidden;
       position: relative;
     }
@@ -26,10 +26,7 @@
       font-size: 36px;
       font-weight: bold;
       text-align: center;
-      color: #fff;
-      text-shadow: 0 0 10px #ff4081;
-      position: relative;
-      z-index: 10;
+      color: #000;
     }
     button {
       width: 250px;
@@ -37,56 +34,46 @@
       margin: 10px 0;
       font-size: 16px;
       font-weight: bold;
-      border: 2px solid #ff4081;
+      border: 2px solid #000;
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
+      background: none;
+      color: #000;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s, box-shadow 0.3s;
-      position: relative;
-      z-index: 10;
+      transition: background 0.3s;
     }
     #connectWalletBtn::before {
-      content: '✨';
+      content: '▶';
       margin-right: 10px;
       font-size: 16px;
-      color: #fff;
+      color: #000;
     }
     button:hover {
-      background: rgba(255, 64, 129, 0.5);
-      box-shadow: 0 0 15px #ff4081;
+      background: #f0f0f0;
     }
     button:disabled {
-      background: rgba(255, 255, 255, 0.1);
+      background: #e0e0e0;
       cursor: not-allowed;
       opacity: 0.6;
-      box-shadow: none;
     }
     #walletInfo {
       margin: 10px 0;
       font-size: 14px;
       font-weight: bold;
-      color: #fff;
+      color: #000;
       word-break: break-all;
       text-align: center;
       max-width: 250px;
-      text-shadow: 0 0 5px #00d4ff;
-      position: relative;
-      z-index: 10;
     }
     #tonPriceDisplay {
       margin: 10px 0;
       font-size: 14px;
       font-weight: bold;
-      color: #fff;
+      color: #000;
       text-align: center;
       max-width: 250px;
-      text-shadow: 0 0 5px #ff4081;
-      position: relative;
-      z-index: 10;
     }
     #retryPriceBtn {
       width: 150px;
@@ -97,37 +84,36 @@
     .hidden {
       display: none;
     }
-    /* Character Animations */
     .character {
       position: absolute;
-      width: 40px;
-      height: 60px;
+      width: 32px;
+      height: 48px; /* Adjusted for CSS character */
       background: transparent;
       will-change: transform;
-      z-index: 1; /* Behind UI */
+      transition: transform 1s linear;
     }
-    /* Chibi-style character using pseudo-elements */
+    /* Simple CSS character to replace image */
     .character::before {
       content: '';
       position: absolute;
       top: 0;
-      left: 10px;
-      width: 20px;
-      height: 20px;
+      left: 8px;
+      width: 16px;
+      height: 16px;
       background: #fff; /* Head */
+      border: 1px solid #000;
       border-radius: 50%;
-      box-shadow: 0 0 5px #0003;
     }
     .character::after {
       content: '';
       position: absolute;
-      top: 20px;
-      left: 5px;
-      width: 30px;
-      height: 35px;
-      background: linear-gradient(#ff9dd9, #ff4081); /* Body/dress */
-      border-radius: 5px;
-      box-shadow: 0 0 5px #0003;
+      top: 16px;
+      left: 4px;
+      width: 24px;
+      height: 32px;
+      background: #add8e6; /* Body */
+      border: 1px solid #000;
+      border-radius: 4px;
     }
     .flipped {
       transform: scaleX(-1);
@@ -136,18 +122,14 @@
       position: absolute;
       font-size: 16px;
       animation: attackMove 1s linear forwards;
-      z-index: 2; /* Above characters but below UI */
     }
     @keyframes attackMove {
-      0% { transform: translateX(0); opacity: 1; }
-      100% { transform: translateX(100px); opacity: 0; }
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100px); opacity: 0; }
     }
-    /* Vary character appearance */
-    .character:nth-child(odd)::after { background: linear-gradient(#9de1ff, #00d4ff); }
-    .character:nth-child(4n)::before { background: #ffd700; } /* Different hair color */
-    .character:nth-child(3n)::after { border-radius: 10px; } /* Different dress shape */
+    /* Minimal variation to differentiate characters */
+    .character:nth-child(odd)::after { background: #b0c4de; }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Anime+Ace&display=swap" rel="stylesheet">
 </head>
 <body>
   <h2>Connect Your TON Wallet</h2>
@@ -169,15 +151,14 @@
     for (let i = 0; i < totalCharacters; i++) {
       const char = document.createElement('div'); // Changed from <img> to <div>
       char.className = 'character';
-      char.style.top = random(0, window.innerHeight - 60) + 'px'; // Adjusted for new character height
-      char.style.left = random(0, window.innerWidth - 40) + 'px';
+      char.style.top = random(0, window.innerHeight - 48) + 'px'; // Adjusted for new character height
+      char.style.left = random(0, window.innerWidth - 32) + 'px';
       document.body.appendChild(char);
 
       setInterval(() => {
-        const newX = random(0, window.innerWidth - 40);
-        const newY = random(0, window.innerHeight - 60);
+        const newX = random(0, window.innerWidth - 32);
+        const newY = random(0, window.innerHeight - 48);
         const flip = newX < parseFloat(char.style.left);
-        char.style.transform = `translate(${newX - parseFloat(char.style.left)}px, ${newY - parseFloat(char.style.top)}px)${flip ? ' scaleX(-1)' : ''}`;
         char.style.top = newY + 'px';
         char.style.left = newX + 'px';
         char.classList.toggle('flipped', flip);
@@ -187,8 +168,8 @@
         const attack = document.createElement('div');
         attack.className = Math.random() > 0.5 ? 'kunai' : 'punch';
         attack.textContent = attack.className === 'kunai' ? '🔪' : '💥';
-        attack.style.left = (parseFloat(char.style.left) + (char.classList.contains('flipped') ? -20 : 40)) + 'px'; /* Adjust for direction */
-        attack.style.top = (parseFloat(char.style.top) + 20) + 'px'; /* Align with character height */
+        attack.style.left = (parseFloat(char.style.left) + (char.classList.contains('flipped') ? -16 : 32)) + 'px'; /* Adjust for direction */
+        attack.style.top = (parseFloat(char.style.top) + 16) + 'px'; /* Align with character height */
         document.body.appendChild(attack);
         setTimeout(() => attack.remove(), 1000);
       }, random(5000, 9000));
