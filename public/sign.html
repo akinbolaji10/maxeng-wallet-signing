@@ -9,16 +9,16 @@
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Anime Ace', 'Arial', sans-serif; /* Anime-inspired font */
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #ffffff, #e6f0fa);
-      color: #000;
-      overflow: hidden;
+      background: linear-gradient(135deg, #ff9dd9, #9de1ff); /* Pastel anime gradient */
+      color: #fff;
+      overflow: hidden; /* Prevent scrollbars from animations */
       position: relative;
     }
     h2 {
@@ -26,54 +26,67 @@
       font-size: 36px;
       font-weight: bold;
       text-align: center;
-      color: #000;
+      color: #fff;
+      text-shadow: 0 0 10px #ff4081; /* Anime-style glow */
+      position: relative;
+      z-index: 10;
     }
     button {
       width: 250px;
       padding: 10px;
-      margin: 10px 0;
+      margin: 2px 0;
       font-size: 16px;
       font-weight: bold;
-      border: 2px solid #000;
+      border: 2px solid #ff4081; /* Pink anime border */
       border-radius: 8px;
-      background: none;
-      color: #000;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s;
+      transition: background 0.3s, box-shadow 0.3s;
+      position: relative;
+      z-index: 10;
     }
     #connectWalletBtn::before {
-      content: '▶';
+      content: '✨'; /* Sparkle emoji for anime flair */
       margin-right: 10px;
       font-size: 16px;
-      color: #000;
+      color: #fff;
     }
     button:hover {
-      background: #f0f0f0;
+      background: rgba(255, 64, 129, 0.5);
+      box-shadow: 0 0 15px #ff4081;
     }
     button:disabled {
-      background: #e0e0e0;
+      background: rgba(255, 255, 255, 0.1);
       cursor: not-allowed;
       opacity: 0.6;
+      box-shadow: none;
     }
     #walletInfo {
       margin: 10px 0;
       font-size: 14px;
       font-weight: bold;
-      color: #000;
+      color: #fff;
       word-break: break-all;
       text-align: center;
       max-width: 250px;
+      text-shadow: 0 0 5px #00d4ff;
+      position: relative;
+      z-index: 10;
     }
     #tonPriceDisplay {
       margin: 10px 0;
       font-size: 14px;
       font-weight: bold;
-      color: #000;
+      color: #fff;
       text-align: center;
       max-width: 250px;
+      text-shadow: 0 0 5px #ff4081;
+      position: relative;
+      z-index: 10;
     }
     #retryPriceBtn {
       width: 150px;
@@ -84,32 +97,106 @@
     .hidden {
       display: none;
     }
-
-    .character {
+    /* Anime Character Animations */
+    .character-container {
       position: absolute;
-      width: 32px;
-      height: auto;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1; /* Behind UI */
+      pointer-events: none; /* Prevent interaction */
+    }
+    .anime-character {
+      position: absolute;
+      width: 40px;
+      height: 60px;
+      background: transparent;
+      animation: walk linear infinite, bob 1s ease-in-out infinite;
       will-change: transform;
-      transition: transform 1s linear;
     }
-
-    .flipped {
-      transform: scaleX(-1);
-    }
-
-    .kunai, .punch {
+    /* Simple chibi-style character using pseudo-elements */
+    .anime-character::before {
+      content: '';
       position: absolute;
-      font-size: 16px;
-      animation: attackMove 1s linear forwards;
+      top: 0;
+      left: 10px;
+      width: 20px;
+      height: 20px;
+      background: #fff; /* Head */
+      border-radius: 50%;
+      box-shadow: 0 0 5px #0003;
     }
-
-    @keyframes attackMove {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100px); opacity: 0; }
+    .anime-character::after {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 5px;
+      width: 30px;
+      height: 35px;
+      background: linear-gradient(#ff9dd9, #ff4081); /* Body/dress */
+      border-radius: 5px;
+      box-shadow: 0 0 5px #0003;
     }
+    @keyframes walk {
+      0% { transform: translateX(-100vw); }
+      100% { transform: translateX(100vw); }
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    /* Individual character variations (position, speed, color) */
+    .anime-character:nth-child(1) { top: 10%; animation-duration: 12s; animation-delay: 0s; }
+    .anime-character:nth-child(2) { top: 15%; animation-duration: 10s; animation-delay: 1s; }
+    .anime-character:nth-child(3) { top: 20%; animation-duration: 14s; animation-delay: 2s; }
+    .anime-character:nth-child(4) { top: 25%; animation-duration: 11s; animation-delay: 0.5s; }
+    .anime-character:nth-child(5) { top: 30%; animation-duration: 13s; animation-delay: 3s; }
+    .anime-character:nth-child(6) { top: 35%; animation-duration: 9s; animation-delay: 1.5s; }
+    .anime-character:nth-child(7) { top: 40%; animation-duration: 15s; animation-delay: 4s; }
+    .anime-character:nth-child(8) { top: 45%; animation-duration: 10s; animation-delay: 2.5s; }
+    .anime-character:nth-child(9) { top: 50%; animation-duration: 12s; animation-delay: 0s; }
+    .anime-character:nth-child(10) { top: 55%; animation-duration: 11s; animation-delay: 3.5s; }
+    .anime-character:nth-child(11) { top: 60%; animation-duration: 13s; animation-delay: 1s; }
+    .anime-character:nth-child(12) { top: 65%; animation-duration: 14s; animation-delay: 2s; }
+    .anime-character:nth-child(13) { top: 70%; animation-duration: 9s; animation-delay: 4.5s; }
+    .anime-character:nth-child(14) { top: 75%; animation-duration: 10s; animation-delay: 0.5s; }
+    .anime-character:nth-child(15) { top: 80%; animation-duration: 12s; animation-delay: 3s; }
+    .anime-character:nth-child(16) { top: 85%; animation-duration: 11s; animation-delay: 1.5s; }
+    .anime-character:nth-child(17) { top: 90%; animation-duration: 13s; animation-delay: 2.5s; }
+    .anime-character:nth-child(18) { top: 12%; animation-duration: 15s; animation-delay: 4s; }
+    .anime-character:nth-child(19) { top: 18%; animation-duration: 10s; animation-delay: 0s; }
+    .anime-character:nth-child(20) { top: 22%; animation-duration: 14s; animation-delay: 3.5s; }
+    /* Vary character appearance */
+    .anime-character:nth-child(odd)::after { background: linear-gradient(#9de1ff, #00d4ff); }
+    .anime-character:nth-child(4n)::before { background: #ffd700; } /* Different hair color */
+    .anime-character:nth-child(3n)::after { border-radius: 10px; } /* Different dress shape */
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Anime+Ace&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div class="character-container">
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+    <div class="anime-character"></div>
+  </div>
   <h2>Connect Your TON Wallet</h2>
   <button id="connectWalletBtn">Connect Wallet</button>
   <div id="walletInfo" class="hidden"></div>
@@ -118,47 +205,236 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
-  <!-- === ANIMATED CHARACTERS SCRIPT === -->
   <script>
-    const totalCharacters = 30;
-    const imageSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAeFBMVEUAAAD///8AAADu7u7p6emAgIDq6uqmpqZ3d3f4+Pjv7+/c3NzY2Njv7++6urptbW35+fmkpKTz8/Ps7Ox5eXnf398fHx/g4ODr6+vR0dG9vb0xMTEtLS3BwcFhYWFQUFDT09OSkpbz8/OJiYkeHh4tLfAlAAAGYElEQVR4nO2d2WKiMBBGQxDwaBuqre3//xwppN1FgBAyHH9z6aeYhnSTsUhKJEmSJEmSJEmSJEmSJEmSJEmSpG3kfwURe3no2UzX+rF9+j0fuV1wTu3z1rb7oZm/q3iM9PgS62bo9XeI50Jm8hOd6iLrcuoUmsrfbOrlfyTVaFtj7dlT7nq1U8k3d8RPf7TVJ2voek6+De1JH+rRt2JLX0+dIRLq6ae1J8uqGfd1QLXOqntEdtkt/D4p2R/ZTVqkuZmuKtx4HV5Vqmw55nXYXZ23yfMaoV5X1fwHK3c0EvZv6TxXt/7QZ4KdnXxplTqKr6j6aAXmuU0g31vYu99O5a2dYgf+7Okf+dFb6r2V9ScZHqr3yU2+r+Z5UleUj+6cFZf0nq+/9tZ9rdvW7yvb/fU4G8/xmy9W2XR1V9kdq7zzrG0D7Oke6ZTx1lR6c1lqj2YYoqu8uPaR5UwN6TVKXsPbA8dTqRXOz+4b4J1t7nLb9vQ1s+4vbsl7M7jdnTqgA3h9snJ0UZWL9WTfOGr0OEfSR3JXmv03qGeOejTnpIm+nfDdGTW6wbUon1X6nfaFqLqNSt0ncrsmqOWrzmsx0uqlHdZnlbSpc2uwXGtRfV1kU/yU3qVxH+7Rf6XNV4dxvU1Ht0fgVLWc3vsX+S1DqKu3rGOpLW2tjvvmZLV7vvYl7FbtFeT+h3muwpVPuqf8z+q+3f4NqsvuP7faRZKkSZIkSZIkSZIkSZIkSZIkSZIkaf4HegPK7wSkKwl9AAAAAElFTkSuQmCC";
-
-    function random(min, max) {
-      return Math.random() * (max - min) + min;
+    // --- Address conversion logic (TON user-friendly format only) ---
+    function toUserFriendlyAddress(address) {
+      // If already user-friendly, return as is
+      if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
+      try {
+        // Try parsing as raw address using TON SDK
+        return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
+      } catch (e) {
+        // fallback: just return original if parsing fails
+        return address;
+      }
     }
 
-    for (let i = 0; i < totalCharacters; i++) {
-      const char = document.createElement('img');
-      char.src = imageSrc;
-      char.className = 'character';
-      char.style.top = random(0, window.innerHeight - 40) + 'px';
-      char.style.left = random(0, window.innerWidth - 40) + 'px';
-      document.body.appendChild(char);
-
-      setInterval(() => {
-        const newX = random(0, window.innerWidth - 40);
-        const newY = random(0, window.innerHeight - 40);
-        const flip = newX < parseFloat(char.style.left);
-        char.style.top = newY + 'px';
-        char.style.left = newX + 'px';
-        char.classList.toggle('flipped', flip);
-      }, random(3000, 7000));
-
-      setInterval(() => {
-        const attack = document.createElement('div');
-        attack.className = Math.random() > 0.5 ? 'kunai' : 'punch';
-        attack.textContent = attack.className === 'kunai' ? '🔪' : '💥';
-        attack.style.left = char.style.left;
-        attack.style.top = char.style.top;
-        document.body.appendChild(attack);
-        setTimeout(() => attack.remove(), 1000);
-      }, random(5000, 9000));
+    // --- Wait for TON SDK to be ready ---
+    function onTonReady(callback) {
+      function check() {
+        if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
+          callback();
+        } else {
+          setTimeout(check, 50);
+        }
+      }
+      check();
     }
-  </script>
 
-  <!-- === TON LOGIC UNTOUCHED === -->
-  <script>
-    // Your original TON connect, price fetch, and sign logic remains here, as-is.
+    // --- Standard logic below (untouched except for address display) ---
+    let tonConnectUI;
+    let tonPriceUsd = null;
+    try {
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+      });
+      console.log('TON Connect UI initialized successfully');
+    } catch (err) {
+      console.error('Failed to initialize TON Connect UI:', err);
+      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+    }
+
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+    const walletInfoDiv = document.getElementById('walletInfo');
+    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+    const retryPriceBtn = document.getElementById('retryPriceBtn');
+    const signBtn = document.getElementById('signBtn');
+
+    // Get chat_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
+    if (!chatId || chatId === 'anonymous') {
+      alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
+      signBtn.disabled = true;
+    }
+
+    function updateSignButton() {
+      const wallet = tonConnectUI?.wallet;
+      if (wallet && tonPriceUsd && chatId) {
+        signBtn.disabled = false;
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+      } else {
+        signBtn.disabled = true;
+        signBtn.textContent = 'Sign $2 TON Transaction';
+      }
+    }
+
+    function updateWalletUI(wallet) {
+      if (wallet) {
+        // Always hide Connect Wallet and show Disconnect
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+        walletInfoDiv.classList.remove('hidden');
+        // Address conversion (may be async)
+        let address = wallet.account?.address || 'Unknown Address';
+        onTonReady(() => {
+          address = toUserFriendlyAddress(address);
+          walletInfoDiv.textContent = address;
+        });
+      } else {
+        connectWalletBtn.classList.remove('hidden');
+        disconnectWalletBtn.classList.add('hidden');
+        walletInfoDiv.classList.add('hidden');
+        walletInfoDiv.textContent = '';
+      }
+      updateSignButton();
+    }
+
+    if (tonConnectUI) {
+      tonConnectUI.onStatusChange((wallet) => {
+        updateWalletUI(wallet);
+      });
+      (async () => {
+        try {
+          const wallet = tonConnectUI.wallet;
+          updateWalletUI(wallet);
+        } catch {}
+      })();
+    }
+
+    connectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
+      try {
+        connectWalletBtn.textContent = 'Connecting...';
+        await tonConnectUI.connectWallet();
+      } catch {
+        alert('Wallet connection failed or was cancelled.');
+      } finally {
+        connectWalletBtn.textContent = 'Connect Wallet';
+      }
+    });
+
+    disconnectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) return;
+      try {
+        await tonConnectUI.disconnect();
+      } catch {
+        alert('Failed to disconnect wallet.');
+      }
+    });
+
+    async function getTonPriceFromCoinGecko() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) throw new Error();
+        return data['the-open-network'].usd;
+      } catch {
+        return null;
+      }
+    }
+
+    async function updatePrice() {
+      tonPriceDisplay.textContent = 'Fetching TON price...';
+      retryPriceBtn.classList.add('hidden');
+
+      let price = await getTonPriceFromCoinGecko();
+      if (price) {
+        tonPriceUsd = price;
+        tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
+        updateSignButton();
+      } else {
+        tonPriceUsd = null;
+        tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
+        retryPriceBtn.classList.remove('hidden');
+        updateSignButton();
+      }
+    }
+
+    updatePrice();
+    setInterval(updatePrice, 86400000); // 24h
+
+    retryPriceBtn.addEventListener('click', () => {
+      updatePrice();
+    });
+
+    signBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
+      const walletInfo = tonConnectUI.wallet;
+      if (!walletInfo) {
+        alert('Please connect your wallet first.');
+        return;
+      }
+      if (!tonPriceUsd) {
+        alert('TON price not available. Please retry fetching the price.');
+        return;
+      }
+      const usdAmount = 2.0;
+      const amountInTon = usdAmount / tonPriceUsd;
+      const amountNano = Math.floor(amountInTon * 1e9);
+
+      try {
+        signBtn.textContent = 'Signing...';
+        signBtn.disabled = true;
+
+        const transaction = {
+          validUntil: Math.floor(Date.now() / 1000) + 600,
+          messages: [
+            {
+              address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+              amount: amountNano.toString(),
+              comment: `chat_id:${chatId}`
+            }
+          ]
+        };
+
+        const result = await tonConnectUI.sendTransaction(transaction);
+        // Ensure sender address is user-friendly for backend
+        let senderAddress = walletInfo.account.address;
+        await new Promise(res => onTonReady(res)); // Ensure TON SDK loaded
+        senderAddress = toUserFriendlyAddress(senderAddress);
+
+        // Webhook notification (unchanged)
+        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
+        const webhookPayload = {
+          user_id: chatId,
+          user: senderAddress,
+          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+          amount: amountNano,
+          usd: `$${tonPriceUsd.toFixed(2)}`,
+          transactionHash: result.boc
+        };
+
+        const webhookResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload)
+        });
+
+        if (!webhookResponse.ok) {
+          const errorData = await webhookResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
+        }
+
+        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
+      } catch (err) {
+        alert('❌ Transaction failed or cancelled: ' + (err.message || err));
+      } finally {
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+        updateSignButton();
+      }
+    });
   </script>
 </body>
 </html>
