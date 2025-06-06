@@ -85,7 +85,7 @@
     }
     button:hover {
       transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(0, 221, 235, 0.7);
+      box-shadow: 0 10px 25px rgba(0, 191, 255, 0.7);
       background: linear-gradient(45deg, #1e90ff, #00ddeb);
     }
     button:disabled {
@@ -173,7 +173,7 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    @media (max-width: 500px) {
+    @MediA (max-width: 500px) {
       h1 { font-size: 1.8rem; }
       .info { font-size: 0.9rem; }
       button { font-size: 1rem; padding: 12px 30px; max-width: 280px; }
@@ -202,6 +202,7 @@
     let tonPriceUsd = null;
     let cachedPrice = null;
     let lastPriceFetch = 0;
+    const address = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
 
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -209,7 +210,6 @@
         buttonRootId: 'ton-connect'
       });
       console.log('TON Connect UI initialized successfully');
--constant address = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
     } catch (err) {
       console.error('Failed to initialize TON Connect UI:', err);
       document.getElementById('status').innerHTML = '❌ Failed to initialize wallet connection';
@@ -303,19 +303,28 @@
 
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=toncoin&vs_currencies=usd', {
-            headers: { 'Accept': 'application/json' }
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'MaxEng-Wallet-Signer/1.0 (Contact: support@maxeng.com)'
+            }
           });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          console.log('CoinGecko response status:', res.status);
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+          }
           const data = await res.json();
-          const tonPrice = data.toncoin.usd;
-          cachedPrice = { ton: (2 / tonPrice).toFixed(6), usd: tonPrice };
+          console.log('CoinGecko response data:', data);
+          if (!data['the-open-network']?.usd) {
+            throw new Error('Invalid data structure: USD price missing');
+          }
+          cachedPrice = { ton: (2 / data['the-open-network'].usd).toFixed(6), usd: data['the-open-network'].usd };
           lastPriceFetch = now;
           return cachedPrice;
         } catch (err) {
+          console.error(`Price fetch attempt ${attempt} failed:`, err);
           if (attempt === 3) {
-            tonPriceDisplay.textContent = '⚠ Failed to load TON price';
-            retryPriceBtn.classList.remove('hidden');
             throw err;
           }
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
@@ -332,10 +341,13 @@
         const priceData = await getTonPrice();
         tonPriceUsd = priceData.usd;
         tonPriceDisplay.textContent = `Live TON Price: $${tonPriceUsd.toFixed(2)}`;
+        statusDiv.innerHTML = '✅ TON price fetched';
         updateSignButton();
       } catch (err) {
         console.error('Price fetch error:', err);
-        statusDiv.innerHTML = '❌ Failed to fetch TON price';
+        tonPriceDisplay.textContent = '⚠ Failed to load TON price';
+        retryPriceBtn.classList.remove('hidden');
+        statusDiv.innerHTML = `❌ Failed to fetch TON price: ${err.message}`;
       }
     }
 
@@ -397,7 +409,7 @@
 
         statusDiv.innerHTML = '✅ Transaction logged! Telegram notified.';
       } catch (err) {
-        console.error('Kaboom! Transaction error:', err);
+        console.error('Transaction error:', err);
         statusDiv.innerHTML = `❌ Error: ${err.message}`;
       } finally {
         updateSignButton();
