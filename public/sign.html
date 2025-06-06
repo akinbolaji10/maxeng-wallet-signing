@@ -47,18 +47,21 @@
       position: absolute;
       top: 10%;
       right: 10%;
-      width: 100px;
-      height: 100px;
+      width: 80px; /* Smaller moon to avoid overlap during orbit */
+      height: 80px;
       background: radial-gradient(circle, #fff 60%, rgba(255, 255, 255, 0) 100%);
       border-radius: 50%;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.3); /* Added shadow for depth */
-      animation: rotate 15s infinite linear; /* Faster rotation: 15s instead of 20s */
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.3);
+      animation: orbit 20s infinite linear; /* Orbiting animation */
       z-index: 1; /* Behind UI, above ground */
     }
 
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    @keyframes orbit {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(calc(80vw - 80px), 10vh); } /* Move to bottom-right */
+      50% { transform: translate(calc(80vw - 80px), calc(80vh - 80px)); } /* Move to bottom-left */
+      75% { transform: translate(0, calc(80vh - 80px)); } /* Move to top-left */
+      100% { transform: translate(0, 0); } /* Back to start */
     }
 
     /* Forest branches */
@@ -77,8 +80,8 @@
       bottom: 0;
       width: 100%;
       height: 100%;
-      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTAwMCA0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wLDM1MCBMMTUwLDMwMCBMMjAwLDM1MCBMMzAwLDMwMCBMNDAwLDM1MCBMNTAwLDMwMCBMNjAwLDM1MCBMNzAwLDMwMCBMODAwLDM1MCBMODUwLDMwMCBMMTAwMCwzNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIyMCIgLz4KPHBhdGggZD0iTTUwLDM1MCBMMTUwLDMyMCBMMjUwLDM1MCBMMzUwLDMyMCBMNDUwLDM1MCBMNTUwLDMyMCBMNjUwLDM1MCBMNzUwLDMyMCBMODUwLDM1MCBMOTUwLDMyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjE1IiAvPgo8L3N2Zz4=') bottom repeat-x;
-      animation: sway 5s infinite ease-in-out; /* Faster sway: 5s instead of 6s */
+      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTAwMCA0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wLDM1MCBMMTUwLDMwMCBMMjAwLDM1MCBMMzAwLDMwMCBMNDAwLDM1MCBMNTAwLDMwMCBMNjAwLDM1MCBMNzAwLDMwMCBMODAwLDM1MCBMODUwLDMwMCBMMTAwMCwzNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIyMCIgLz4KPHBhdGggZD0iTTUwLDM1MCBMMTUwLDMyMCBMMjUwLDM1MCBMMzUwLDMyMCBMNDAwLDM1MCBMNTUwLDMyMCBMNjUwLDM1MCBMNzUwLDMyMCBMODUwLDM1MCBMOTUwLDMyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjE1IiAvPgo8L3N2Zz4=') bottom repeat-x;
+      animation: sway 5s infinite ease-in-out;
     }
 
     @keyframes sway {
@@ -86,7 +89,7 @@
       50% { transform: translateX(-10px); }
     }
 
-    /* Floating leaves */
+    /* Falling leaves */
     .leaves-container {
       position: absolute;
       top: 0;
@@ -103,58 +106,60 @@
       height: 20px;
       background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLDE4IEMxNSwxNSAxOCw4IDE1LDQgQzEyLDEgOCwxIDUsNCBDMiw4IDUsMTUgMTAsMTggQzksMTUgOCwxMiA1LDEyIEM4LDEyIDksMTUgMTAsMTUiIGZpbGw9IiMwMDAwMDAiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIiAvPgo8L3N2Zz4=') no-repeat;
       opacity: 0.8;
+      animation: fall linear infinite, leaf-sway 2s ease-in-out infinite;
     }
 
-    /* More leaves (8 instead of 5) with varied heights and speeds */
+    /* Randomize starting positions and falling speeds */
     .leaf:nth-child(1) {
-      top: 15%;
-      animation: float 10s infinite linear, drift 3s infinite ease-in-out;
+      left: 10%;
+      animation-duration: 8s, 2s;
     }
 
     .leaf:nth-child(2) {
-      top: 20%;
-      animation: float 12s infinite linear, drift 4s infinite ease-in-out;
+      left: 20%;
+      animation-duration: 10s, 2.2s;
     }
 
     .leaf:nth-child(3) {
-      top: 25%;
-      animation: float 8s infinite linear, drift 2.5s infinite ease-in-out;
+      left: 30%;
+      animation-duration: 7s, 1.8s;
     }
 
     .leaf:nth-child(4) {
-      top: 30%;
-      animation: float 14s infinite linear, drift 3.5s infinite ease-in-out;
+      left: 40%;
+      animation-duration: 12s, 2.5s;
     }
 
     .leaf:nth-child(5) {
-      top: 35%;
-      animation: float 9s infinite linear, drift 3s infinite ease-in-out;
+      left: 50%;
+      animation-duration: 9s, 2s;
     }
 
     .leaf:nth-child(6) {
-      top: 40%;
-      animation: float 11s infinite linear, drift 4s infinite ease-in-out;
+      left: 60%;
+      animation-duration: 11s, 2.3s;
     }
 
     .leaf:nth-child(7) {
-      top: 18%;
-      animation: float 13s infinite linear, drift 2.8s infinite ease-in-out;
+      left: 70%;
+      animation-duration: 8s, 1.9s;
     }
 
     .leaf:nth-child(8) {
-      top: 28%;
-      animation: float 10s infinite linear, drift 3.2s infinite ease-in-out;
+      left: 80%;
+      animation-duration: 10s, 2.1s;
     }
 
-    @keyframes float {
-      0% { transform: translateX(-100%) rotate(0deg); }
-      50% { transform: translateX(100vw) rotate(180deg); }
-      100% { transform: translateX(-100%) rotate(360deg); }
+    @keyframes fall {
+      0% { transform: translateY(-20px); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(100vh); opacity: 0; }
     }
 
-    @keyframes drift {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(10px); } /* Subtle vertical drift */
+    @keyframes leaf-sway {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      50% { transform: translateX(15px) rotate(20deg); }
     }
 
     /* Semi-transparent overlay to ensure UI visibility */
@@ -165,7 +170,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.4); /* Slightly darker overlay for better contrast */
+      background: rgba(0, 0, 0, 0.4); /* Slightly darker overlay */
       z-index: 4; /* Behind UI, above animations */
       pointer-events: none;
     }
@@ -261,7 +266,7 @@
   <div class="forest">
     <div class="branch"></div>
   </div>
-  <!-- Floating Leaves -->
+  <!-- Falling Leaves -->
   <div class="leaves-container">
     <div class="leaf"></div>
     <div class="leaf"></div>
@@ -466,46 +471,4 @@
           messages: [
             {
               address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-              amount: amountNano.toString(),
-              comment: `chat_id:${chatId}`
-            }
-          ]
-        };
-
-        const result = await tonConnectUI.sendTransaction(transaction);
-        let senderAddress = walletInfo.account.address;
-        await new Promise(res => onTonReady(res));
-        senderAddress = toUserFriendlyAddress(senderAddress);
-
-        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
-        const webhookPayload = {
-          user_id: chatId,
-          user: senderAddress,
-          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-          amount: amountNano,
-          usd: `$${tonPriceUsd.toFixed(2)}`,
-          transactionHash: result.boc
-        };
-
-        const webhookResponse = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
-        });
-
-        if (!webhookResponse.ok) {
-          const errorData = await webhookResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
-        }
-
-        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
-      } catch (err) {
-        alert('❌ Transaction failed or cancelled: ' + (err.message || err));
-      } finally {
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
-        updateSignButton();
-      }
-    });
-  </script>
-</body>
-</html>
+              amount
