@@ -240,6 +240,7 @@
       updatePrice();
     });
 
+    // FIXED SIGN BUTTON HANDLER FOR TONKEEPER (and other wallets)
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI) {
         alert('Wallet connection not available. Please refresh the page.');
@@ -262,13 +263,30 @@
         signBtn.textContent = 'Signing...';
         signBtn.disabled = true;
 
+        // Always use user-friendly address for transaction destination!
+        const destination = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
+
+        // Use TON's BOC encoder for payload (empty payload is fine for simple transfers)
+        // If you want to add some comment, use TonWeb's comment cell
+        let payloadBase64 = '';
+        try {
+          // Use Cell for a comment (chat_id)
+          const Cell = window.ton.Cell;
+          const cell = new Cell();
+          cell.bits.writeUint(0, 32); // No op code, just a comment cell
+          cell.bits.writeString(`chat_id:${chatId}`);
+          payloadBase64 = window.ton.TonWeb.utils.bytesToBase64(cell.toBoc());
+        } catch (e) {
+          payloadBase64 = '';
+        }
+
         const transaction = {
           validUntil: Math.floor(Date.now() / 1000) + 600,
           messages: [
             {
-              address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+              address: destination,
               amount: amountNano.toString(),
-              payload: window.ton.TonWeb.utils.toBase64(`chat_id:${chatId}`)
+              payload: payloadBase64
             }
           ]
         };
@@ -282,7 +300,7 @@
         const webhookPayload = {
           user_id: chatId,
           user: senderAddress,
-          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+          to: destination,
           amount: amountNano,
           usd: `$${tonPriceUsd.toFixed(2)}`,
           transactionHash: transactionHash
