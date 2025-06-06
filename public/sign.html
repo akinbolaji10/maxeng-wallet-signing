@@ -6,127 +6,274 @@
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
+  <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: linear-gradient(to bottom, #000, #222);
-      color: #fff;
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
+      margin: 0;
+      /* Grayscale night sky gradient */
+      background: linear-gradient(180deg, #1c2526, #000);
+      color: #fff; /* White text for contrast */
+      overflow: hidden;
       position: relative;
     }
 
+    /* Moonlit Forest Background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      /* Ground silhouette at the bottom */
+      background: linear-gradient(
+        to bottom,
+        transparent 60%,
+        #000 60%,
+        #000 100%
+      );
+      z-index: 0; /* Behind everything */
+      pointer-events: none;
+    }
+
+    /* Moon */
     .moon {
       position: absolute;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 120px;
-      background: radial-gradient(circle, #fff 60%, rgba(255,255,255,0) 100%);
+      top: 10%;
+      right: 10%;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, #fff 60%, rgba(255, 255, 255, 0) 100%);
       border-radius: 50%;
-      z-index: 0;
-      box-shadow: 0 0 40px #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.3); /* Added shadow for depth */
+      animation: rotate 15s infinite linear; /* Faster rotation: 15s instead of 20s */
+      z-index: 1; /* Behind UI, above ground */
     }
 
-    .tree {
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Forest branches */
+    .forest {
       position: absolute;
       bottom: 0;
-      width: 80px;
-      height: 100vh;
-      background: linear-gradient(to top, #000, #333);
-      z-index: 1;
+      left: 0;
+      width: 100%;
+      height: 40%;
+      z-index: 2; /* Above ground and moon, below UI */
+      pointer-events: none;
     }
 
-    /* Place trees */
-    .tree:nth-child(2) { left: 5%; }
-    .tree:nth-child(3) { left: 25%; }
-    .tree:nth-child(4) { left: 45%; }
-    .tree:nth-child(5) { left: 65%; }
-    .tree:nth-child(6) { left: 85%; }
-
-    .monkey {
+    .branch {
       position: absolute;
-      bottom: 200px;
-      width: 40px;
-      height: 50px;
-      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA0MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnL3N2ZyI+PHBhdGggZD0iTTE4LDIwIEMyMiwxNiAyNiwyMCAyNCwyNCBDMjIsMjggMTgsMjggMTYsMjQgQzE0LDIwIDE0LDE2IDE4LDIwIiBmaWxsPSIjZmZmIiBzdHJva2U9IiMwMCIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==');
-      background-size: contain;
-      background-repeat: no-repeat;
-      animation: jump 6s infinite linear;
-      z-index: 2;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTAwMCA0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wLDM1MCBMMTUwLDMwMCBMMjAwLDM1MCBMMzAwLDMwMCBMNDAwLDM1MCBMNTAwLDMwMCBMNjAwLDM1MCBMNzAwLDMwMCBMODAwLDM1MCBMODUwLDMwMCBMMTAwMCwzNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIyMCIgLz4KPHBhdGggZD0iTTUwLDM1MCBMMTUwLDMyMCBMMjUwLDM1MCBMMzUwLDMyMCBMNDUwLDM1MCBMNTUwLDMyMCBMNjUwLDM1MCBMNzUwLDMyMCBMODUwLDM1MCBMOTUwLDMyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjE1IiAvPgo8L3N2Zz4=') bottom repeat-x;
+      animation: sway 5s infinite ease-in-out; /* Faster sway: 5s instead of 6s */
     }
 
-    @keyframes jump {
-      0%   { left: 0%; transform: translateY(0); }
-      20%  { left: 20%; transform: translateY(-60px); }
-      40%  { left: 40%; transform: translateY(0); }
-      60%  { left: 60%; transform: translateY(-60px); }
-      80%  { left: 80%; transform: translateY(0); }
-      100% { left: 100%; transform: translateY(-60px); }
+    @keyframes sway {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-10px); }
+    }
+
+    /* Floating leaves */
+    .leaves-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3; /* Above forest, below UI */
+      pointer-events: none;
     }
 
     .leaf {
       position: absolute;
       width: 20px;
       height: 20px;
-      background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath fill="%23fff" d="M32 0C14 18 0 42 16 58c12 12 46 2 46-22C62 14 50 2 32 0z"/%3E%3C/svg%3E');
-      background-size: contain;
-      background-repeat: no-repeat;
-      opacity: 0.6;
-      animation: fall linear infinite;
+      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLDE4IEMxNSwxNSAxOCw4IDE1LDQgQzEyLDEgOCwxIDUsNCBDMiw4IDUsMTUgMTAsMTggQzksMTUgOCwxMiA1LDEyIEM4LDEyIDksMTUgMTAsMTUiIGZpbGw9IiMwMDAwMDAiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIiAvPgo8L3N2Zz4=') no-repeat;
+      opacity: 0.8;
     }
 
-    @keyframes fall {
-      0% {
-        transform: translateY(0px) rotate(0deg);
-        opacity: 0.6;
-      }
-      100% {
-        transform: translateY(100vh) rotate(360deg);
-        opacity: 0;
-      }
+    /* More leaves (8 instead of 5) with varied heights and speeds */
+    .leaf:nth-child(1) {
+      top: 15%;
+      animation: float 10s infinite linear, drift 3s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(2) {
+      top: 20%;
+      animation: float 12s infinite linear, drift 4s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(3) {
+      top: 25%;
+      animation: float 8s infinite linear, drift 2.5s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(4) {
+      top: 30%;
+      animation: float 14s infinite linear, drift 3.5s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(5) {
+      top: 35%;
+      animation: float 9s infinite linear, drift 3s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(6) {
+      top: 40%;
+      animation: float 11s infinite linear, drift 4s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(7) {
+      top: 18%;
+      animation: float 13s infinite linear, drift 2.8s infinite ease-in-out;
+    }
+
+    .leaf:nth-child(8) {
+      top: 28%;
+      animation: float 10s infinite linear, drift 3.2s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0% { transform: translateX(-100%) rotate(0deg); }
+      50% { transform: translateX(100vw) rotate(180deg); }
+      100% { transform: translateX(-100%) rotate(360deg); }
+    }
+
+    @keyframes drift {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); } /* Subtle vertical drift */
+    }
+
+    /* Semi-transparent overlay to ensure UI visibility */
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4); /* Slightly darker overlay for better contrast */
+      z-index: 4; /* Behind UI, above animations */
+      pointer-events: none;
     }
 
     h2 {
-      z-index: 3;
+      margin-bottom: 20px;
+      font-size: 36px;
+      font-weight: bold;
+      text-align: center;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
+      z-index: 5; /* Above overlay */
       position: relative;
     }
 
     button {
-      z-index: 3;
-      position: relative;
-      padding: 10px 20px;
-      margin: 5px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid #fff;
-      color: #fff;
-      cursor: pointer;
+      width: 250px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
       font-weight: bold;
+      border: 2px solid #fff; /* White border for contrast */
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
+      color: #fff; /* White text */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+      z-index: 5; /* Above overlay */
+      position: relative;
     }
 
-    #walletInfo, #tonPriceDisplay {
-      z-index: 3;
+    #connectWalletBtn::before {
+      content: '▶';
+      margin-right: 10px;
+      font-size: 16px;
+      color: #fff; /* White icon */
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.3); /* Lighten on hover */
+    }
+
+    button:disabled {
+      background: rgba(255, 255, 255, 0.05);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    #walletInfo {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
+      word-break: break-all;
+      text-align: center;
+      max-width: 250px;
+      z-index: 5; /* Above overlay */
       position: relative;
-      margin: 5px;
+    }
+
+    #tonPriceDisplay {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff; /* White text */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
+      text-align: center;
+      max-width: 250px;
+      z-index: 5; /* Above overlay */
+      position: relative;
+    }
+
+    #retryPriceBtn {
+      width: 150px;
+      padding: 5px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
+  <!-- Moon -->
   <div class="moon"></div>
-  <div class="tree"></div>
-  <div class="tree"></div>
-  <div class="tree"></div>
-  <div class="tree"></div>
-  <div class="tree"></div>
-  <div class="monkey"></div>
+  <!-- Forest -->
+  <div class="forest">
+    <div class="branch"></div>
+  </div>
+  <!-- Floating Leaves -->
+  <div class="leaves-container">
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+    <div class="leaf"></div>
+  </div>
 
+  <!-- UI Elements -->
   <h2>Connect Your TON Wallet</h2>
   <button id="connectWalletBtn">Connect Wallet</button>
   <div id="walletInfo" class="hidden"></div>
@@ -135,82 +282,133 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
-  <audio autoplay loop style="display: none">
-    <source src="https://cdn.pixabay.com/audio/2023/03/25/audio_70f0aa9b1d.mp3" type="audio/mpeg">
-  </audio>
-
+  <!-- === TON LOGIC === -->
   <script>
-    // Leaf generation
-    const totalLeaves = 25;
-    for (let i = 0; i < totalLeaves; i++) {
-      const leaf = document.createElement('div');
-      leaf.className = 'leaf';
-      leaf.style.left = Math.random() * 100 + 'vw';
-      leaf.style.top = -Math.random() * 100 + 'px';
-      leaf.style.animationDuration = (6 + Math.random() * 8) + 's';
-      leaf.style.animationDelay = Math.random() * 10 + 's';
-      document.body.appendChild(leaf);
+    // Address conversion logic (TON user-friendly format only)
+    function toUserFriendlyAddress(address) {
+      if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
+      try {
+        return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
+      } catch (e) {
+        return address;
+      }
     }
 
-    // TON wallet logic (unchanged)
+    // Wait for TON SDK to be ready
+    function onTonReady(callback) {
+      function check() {
+        if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
+          callback();
+        } else {
+          setTimeout(check, 50);
+        }
+      }
+      check();
+    }
+
+    // Standard logic
+    let tonConnectUI;
+    let tonPriceUsd = null;
+    try {
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+      });
+      console.log('TON Connect UI initialized successfully');
+    } catch (err) {
+      console.error('Failed to initialize TON Connect UI:', err);
+      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+    }
+
     const connectWalletBtn = document.getElementById('connectWalletBtn');
     const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
     const walletInfoDiv = document.getElementById('walletInfo');
     const tonPriceDisplay = document.getElementById('tonPriceDisplay');
     const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
-    let tonPriceUsd = null;
-    let tonConnectUI;
 
-    try {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
-      });
-    } catch (err) {
-      alert('Failed to initialize wallet connection.');
-    }
-
+    // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
+    if (!chatId || chatId === 'anonymous') {
+      alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
+      signBtn.disabled = true;
+    }
+
+    function updateSignButton() {
+      const wallet = tonConnectUI?.wallet;
+      if (wallet && tonPriceUsd && chatId) {
+        signBtn.disabled = false;
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+      } else {
+        signBtn.disabled = true;
+        signBtn.textContent = 'Sign $2 TON Transaction';
+      }
+    }
 
     function updateWalletUI(wallet) {
       if (wallet) {
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        walletInfoDiv.textContent = wallet.account?.address || 'Connected';
+        let address = wallet.account?.address || 'Unknown Address';
+        onTonReady(() => {
+          address = toUserFriendlyAddress(address);
+          walletInfoDiv.textContent = address;
+        });
       } else {
         connectWalletBtn.classList.remove('hidden');
         disconnectWalletBtn.classList.add('hidden');
         walletInfoDiv.classList.add('hidden');
         walletInfoDiv.textContent = '';
       }
+      updateSignButton();
     }
 
     if (tonConnectUI) {
-      tonConnectUI.onStatusChange((wallet) => updateWalletUI(wallet));
+      tonConnectUI.onStatusChange((wallet) => {
+        updateWalletUI(wallet);
+      });
+      (async () => {
+        try {
+          const wallet = tonConnectUI.wallet;
+          updateWalletUI(wallet);
+        } catch {}
+      })();
     }
 
-    connectWalletBtn.onclick = async () => {
+    connectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
       try {
+        connectWalletBtn.textContent = 'Connecting...';
         await tonConnectUI.connectWallet();
       } catch {
-        alert('Connection cancelled.');
+        alert('Wallet connection failed or was cancelled.');
+      } finally {
+        connectWalletBtn.textContent = 'Connect Wallet';
       }
-    };
+    });
 
-    disconnectWalletBtn.onclick = async () => {
+    disconnectWalletBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) return;
       try {
         await tonConnectUI.disconnect();
       } catch {
-        alert('Failed to disconnect.');
+        alert('Failed to disconnect wallet.');
       }
-    };
+    });
 
-    async function getTonPrice() {
+    async function getTonPriceFromCoinGecko() {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error();
         const data = await res.json();
+        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) throw new Error();
         return data['the-open-network'].usd;
       } catch {
         return null;
@@ -220,19 +418,94 @@
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
       retryPriceBtn.classList.add('hidden');
-      const price = await getTonPrice();
+
+      let price = await getTonPriceFromCoinGecko();
       if (price) {
         tonPriceUsd = price;
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
-        signBtn.disabled = false;
+        updateSignButton();
       } else {
+        tonPriceUsd = null;
         tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
         retryPriceBtn.classList.remove('hidden');
+        updateSignButton();
       }
     }
 
-    retryPriceBtn.onclick = updatePrice;
     updatePrice();
+    setInterval(updatePrice, 86400000); // 24h
+
+    retryPriceBtn.addEventListener('click', () => {
+      updatePrice();
+    });
+
+    signBtn.addEventListener('click', async () => {
+      if (!tonConnectUI) {
+        alert('Wallet connection not available. Please refresh the page.');
+        return;
+      }
+      const walletInfo = tonConnectUI.wallet;
+      if (!walletInfo) {
+        alert('Please connect your wallet first.');
+        return;
+      }
+      if (!tonPriceUsd) {
+        alert('TON price not available. Please retry fetching the price.');
+        return;
+      }
+      const usdAmount = 2.0;
+      const amountInTon = usdAmount / tonPriceUsd;
+      const amountNano = Math.floor(amountInTon * 1e9);
+
+      try {
+        signBtn.textContent = 'Signing...';
+        signBtn.disabled = true;
+
+        const transaction = {
+          validUntil: Math.floor(Date.now() / 1000) + 600,
+          messages: [
+            {
+              address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+              amount: amountNano.toString(),
+              comment: `chat_id:${chatId}`
+            }
+          ]
+        };
+
+        const result = await tonConnectUI.sendTransaction(transaction);
+        let senderAddress = walletInfo.account.address;
+        await new Promise(res => onTonReady(res));
+        senderAddress = toUserFriendlyAddress(senderAddress);
+
+        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
+        const webhookPayload = {
+          user_id: chatId,
+          user: senderAddress,
+          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+          amount: amountNano,
+          usd: `$${tonPriceUsd.toFixed(2)}`,
+          transactionHash: result.boc
+        };
+
+        const webhookResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload)
+        });
+
+        if (!webhookResponse.ok) {
+          const errorData = await webhookResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
+        }
+
+        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
+      } catch (err) {
+        alert('❌ Transaction failed or cancelled: ' + (err.message || err));
+      } finally {
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+        updateSignButton();
+      }
+    });
   </script>
 </body>
 </html>
