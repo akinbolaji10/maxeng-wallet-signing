@@ -119,7 +119,6 @@
       check();
     }
 
-    // --- Standard logic below (untouched except for address display) ---
     let tonConnectUI;
     let tonPriceUsd = null;
     try {
@@ -160,22 +159,22 @@
 
     // --- Corrected updateWalletUI Function ---
     function updateWalletUI(wallet) {
-      if (wallet) {
-        // Always hide Connect Wallet and show Disconnect
+      if (wallet && wallet.account && wallet.account.address) {
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        // Address conversion (may be async)
-        let address = wallet.account?.address || 'Unknown Address';
+        walletInfoDiv.textContent = "Wallet: ..."; // temporary while waiting for TON SDK
+
+        const rawAddress = wallet.account.address;
         onTonReady(() => {
-          address = toUserFriendlyAddress(address);
-          walletInfoDiv.textContent = address;
+          const friendly = toUserFriendlyAddress(rawAddress);
+          walletInfoDiv.textContent = "Wallet: " + friendly;
         });
       } else {
         connectWalletBtn.classList.remove('hidden');
         disconnectWalletBtn.classList.add('hidden');
-        walletInfoDiv.classList.add('hidden');
         walletInfoDiv.textContent = '';
+        walletInfoDiv.classList.add('hidden');
       }
       updateSignButton();
     }
