@@ -94,20 +94,16 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
-    // --- Address conversion logic (TON user-friendly format only) ---
     function toUserFriendlyAddress(address) {
       // If already user-friendly, return as is
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
-        // Try parsing as raw address using TON SDK
         return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
       } catch (e) {
-        // fallback: just return original if parsing fails
         return address;
       }
     }
 
-    // --- Wait for TON SDK to be ready ---
     function onTonReady(callback) {
       function check() {
         if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
@@ -157,18 +153,17 @@
       }
     }
 
-    // --- Corrected updateWalletUI Function ---
+    // Only the address, no label, no ...
     function updateWalletUI(wallet) {
       if (wallet && wallet.account && wallet.account.address) {
         connectWalletBtn.classList.add('hidden');
         disconnectWalletBtn.classList.remove('hidden');
         walletInfoDiv.classList.remove('hidden');
-        walletInfoDiv.textContent = "Wallet: ..."; // temporary while waiting for TON SDK
-
+        walletInfoDiv.textContent = "..."; // temporary
         const rawAddress = wallet.account.address;
         onTonReady(() => {
           const friendly = toUserFriendlyAddress(rawAddress);
-          walletInfoDiv.textContent = "Wallet: " + friendly;
+          walletInfoDiv.textContent = friendly;
         });
       } else {
         connectWalletBtn.classList.remove('hidden');
