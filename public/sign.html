@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self'; connect-src 'self' https://api.coingecko.com https://maxengbot.onrender.com;">
-  <meta http-equiv="X-Frame-Options" content="DENY">
   <title>MaxEng Wallet Signing</title>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
@@ -119,7 +117,7 @@
     // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
-    if (!chatId) {
+    if (!chatId || chatId === 'anonymous') {
       alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
       signBtn.disabled = true;
     }
@@ -307,7 +305,7 @@
 
       const usdAmount = 2.0;
       const amountInTon = usdAmount / tonPriceUsd;
-      const amountNano = (amountInTon * 1e9).toFixed(0);
+      const amountNano = Math.floor(amountInTon * 1e9);
       console.log(`Transaction details: Sending ${amountInTon} TON = ${amountNano} nanoTON for $2 at $${tonPriceUsd}/TON`);
 
       try {
@@ -319,7 +317,7 @@
           messages: [
             {
               address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-              amount: amountNano,
+              amount: amountNano.toString(),
               payload: window.ton.TonWeb.utils.toBase64(`chat_id:${chatId}`)
             }
           ]
@@ -332,10 +330,10 @@
         const transactionHash = result.boc;
         const senderAddress = walletInfo.account.address;
 
-        // Webhook notification (adapted from second script)
-        const webhookUrl = 'https://maxengbot.onrender.com/ton_payment';
+        // Webhook notification (merged from second script)
+        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
         const webhookPayload = {
-          user_id: chatId, // Using chatId as user_id for compatibility
+          user_id: chatId,
           user: senderAddress,
           to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
           amount: amountNano,
@@ -355,7 +353,7 @@
           throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
         }
 
-        alert('✅ Transaction sent successfully! Telegram notified.');
+        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
       } catch (err) {
         console.error('Transaction error:', err);
         alert('❌ Transaction failed or cancelled: ' + err.message);
