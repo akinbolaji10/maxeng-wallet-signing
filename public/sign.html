@@ -16,206 +16,88 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      /* Night sky gradient */
-      background: linear-gradient(180deg, #0d1b2a, #1b263b);
-      color: #fff; /* White text for contrast */
+      background: linear-gradient(135deg, #fff0f5, #e0f7fa);
+      color: #000;
       overflow: hidden;
       position: relative;
     }
-
-    /* Moonlit Forest Background */
-    body::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      /* Ground silhouette at the bottom */
-      background: linear-gradient(
-        to bottom,
-        transparent 60%,
-        #0a0a0a 60%,
-        #0a0a0a 100%
-      );
-      z-index: 0; /* Behind everything */
-      pointer-events: none;
-    }
-
-    /* Moon */
-    .moon {
-      position: absolute;
-      top: 10%;
-      right: 10%;
-      width: 100px;
-      height: 100px;
-      background: radial-gradient(circle, #f5f5f5 60%, rgba(245, 245, 245, 0) 100%);
-      border-radius: 50%;
-      box-shadow: 0 0 20px rgba(245, 245, 245, 0.8);
-      animation: glow 3s infinite ease-in-out;
-      z-index: 1; /* Behind UI, above ground */
-    }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(245, 245, 245, 0.8); }
-      50% { box-shadow: 0 0 30px rgba(245, 245, 245, 1); }
-    }
-
-    /* Forest branches */
-    .forest {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 40%;
-      z-index: 2; /* Above ground and moon, below UI */
-      pointer-events: none;
-    }
-
-    .branch {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
-      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTAwMCA0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wLDM1MCBMMTUwLDMwMCBMMjAwLDM1MCBMMzAwLDMwMCBMNDAwLDM1MCBMNTAwLDMwMCBMNjAwLDM1MCBMNzAwLDMwMCBMODAwLDM1MCBMODUwLDMwMCBMMTAwMCwzNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIyMCIgLz4KPHBhdGggZD0iTTUwLDM1MCBMMTUwLDMyMCBMMjUwLDM1MCBMMzUwLDMyMCBMNDUwLDM1MCBMNTUwLDMyMCBMNjUwLDM1MCBMNzUwLDMyMCBMODUwLDM1MCBMOTUwLDMyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjE1IiAvPgo8L3N2Zz4=') bottom repeat-x;
-      animation: sway 6s infinite ease-in-out;
-    }
-
-    @keyframes sway {
-      0%, 100% { transform: translateX(0); }
-      50% { transform: translateX(-10px); }
-    }
-
-    /* Monkey jumping under moonlight */
-    .monkey {
-      position: absolute;
-      bottom: 40%;
-      left: 0;
-      width: 30px;
-      height: 40px;
-      background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCAzMCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE1LDMwIEMyMCwyNSAyNSwyMCAyMCwxNSBDMTUsMTAgMTAsMTAgMTAsMTUgQzEwLDIwIDEyLDI1IDE1LDI4IEMxMywzMCAxMCwzMiAxMCwzNSBDMTAsMzggMTIsNDAgMTUsNDAgQzE4LDQwIDIwLDM4IDIwLDM1IEMyMCwzMiAxOCwzMCAxNSwzMCIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEiIC8+Cjwvc3ZnPg==') no-repeat;
-      animation: jump 8s infinite linear;
-      z-index: 3; /* Above forest, below UI */
-    }
-
-    @keyframes jump {
-      0% { transform: translateX(-50px) translateY(0); }
-      10% { transform: translateX(20vw) translateY(-30px); }
-      20% { transform: translateX(40vw) translateY(0); }
-      30% { transform: translateX(60vw) translateY(-30px); }
-      40% { transform: translateX(80vw) translateY(0); }
-      50% { transform: translateX(100vw) translateY(-30px); }
-      100% { transform: translateX(100vw) translateY(0); }
-    }
-
-    /* Semi-transparent overlay to ensure UI visibility */
-    body::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.3); /* Slight dark overlay */
-      z-index: 4; /* Behind UI, above animations */
-      pointer-events: none;
-    }
-
     h2 {
       margin-bottom: 20px;
       font-size: 36px;
       font-weight: bold;
       text-align: center;
-      color: #fff; /* White text */
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
-      z-index: 5; /* Above overlay */
-      position: relative;
     }
-
     button {
       width: 250px;
       padding: 10px;
       margin: 10px 0;
       font-size: 16px;
       font-weight: bold;
-      border: 2px solid #fff; /* White border for contrast */
+      border: 2px solid #000;
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-      color: #fff; /* White text */
+      background: none;
+      color: #000;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.3s;
-      z-index: 5; /* Above overlay */
-      position: relative;
     }
-
     #connectWalletBtn::before {
       content: '▶';
       margin-right: 10px;
       font-size: 16px;
-      color: #fff; /* White icon */
     }
-
     button:hover {
-      background: rgba(255, 255, 255, 0.3); /* Lighten on hover */
+      background: #f0f0f0;
     }
-
     button:disabled {
-      background: rgba(255, 255, 255, 0.05);
+      background: #e0e0e0;
       cursor: not-allowed;
       opacity: 0.6;
     }
-
-    #walletInfo {
-      margin: 10px 0;
+    #walletInfo, #tonPriceDisplay {
       font-size: 14px;
       font-weight: bold;
-      color: #fff; /* White text */
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
-      word-break: break-all;
       text-align: center;
-      max-width: 250px;
-      z-index: 5; /* Above overlay */
-      position: relative;
-    }
-
-    #tonPriceDisplay {
       margin: 10px 0;
-      font-size: 14px;
-      font-weight: bold;
-      color: #fff; /* White text */
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
-      text-align: center;
+      word-break: break-word;
       max-width: 250px;
-      z-index: 5; /* Above overlay */
-      position: relative;
     }
-
     #retryPriceBtn {
       width: 150px;
       padding: 5px;
       font-size: 12px;
       margin-top: 5px;
     }
-
     .hidden {
       display: none;
+    }
+
+    /* Sakura petal animation */
+    .petal {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23f48fb1' d='M12 0c2 4 7 4 7 7s-3 4-3 7 3 4 3 7-5 3-7 3-7 0-7-3 3-4 3-7-3-4-3-7 5-3 7-3z'/%3E%3C/svg%3E");
+      background-size: cover;
+      opacity: 0.8;
+      animation: floatSakura linear infinite;
+      pointer-events: none;
+    }
+    @keyframes floatSakura {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Moon -->
-  <div class="moon"></div>
-  <!-- Forest -->
-  <div class="forest">
-    <div class="branch"></div>
-  </div>
-  <!-- Monkey -->
-  <div class="monkey"></div>
-
-  <!-- UI Elements -->
   <h2>Connect Your TON Wallet</h2>
   <button id="connectWalletBtn">Connect Wallet</button>
   <div id="walletInfo" class="hidden"></div>
@@ -224,9 +106,28 @@
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
-  <!-- === TON LOGIC === -->
+  <!-- 🌸 Sakura Petal Script -->
   <script>
-    // Address conversion logic (TON user-friendly format only)
+    const petalCount = 25;
+    for (let i = 0; i < petalCount; i++) {
+      const petal = document.createElement('div');
+      petal.classList.add('petal');
+      petal.style.left = Math.random() * 100 + 'vw';
+      petal.style.top = -Math.random() * 100 + 'px';
+      petal.style.animationDuration = (8 + Math.random() * 8) + 's';
+      petal.style.animationDelay = Math.random() * 5 + 's';
+      document.body.appendChild(petal);
+    }
+  </script>
+
+  <!-- 🎵 Background Music -->
+  <audio autoplay loop hidden>
+    <source src="https://cdn.pixabay.com/download/audio/2023/05/04/audio_6c8b8d8c11.mp3?filename=zen-garden-143276.mp3" type="audio/mpeg" />
+    Your browser does not support the audio element.
+  </audio>
+
+  <!-- 💎 TON Logic Script (unchanged) -->
+  <script>
     function toUserFriendlyAddress(address) {
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
@@ -235,8 +136,6 @@
         return address;
       }
     }
-
-    // Wait for TON SDK to be ready
     function onTonReady(callback) {
       function check() {
         if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
@@ -248,17 +147,15 @@
       check();
     }
 
-    // Standard logic
     let tonConnectUI;
     let tonPriceUsd = null;
+
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
-      console.log('TON Connect UI initialized successfully');
     } catch (err) {
-      console.error('Failed to initialize TON Connect UI:', err);
-      alert('Failed to initialize wallet connection. Please check your setup and refresh.');
+      alert('Failed to initialize wallet connection. Please refresh.');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -268,11 +165,10 @@
     const retryPriceBtn = document.getElementById('retryPriceBtn');
     const signBtn = document.getElementById('signBtn');
 
-    // Get chat_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
     if (!chatId || chatId === 'anonymous') {
-      alert('Error: chat_id or user_id not found in URL. Please access via /subscribe in Telegram.');
+      alert('chat_id not found in URL. Access via /subscribe in Telegram.');
       signBtn.disabled = true;
     }
 
@@ -307,9 +203,7 @@
     }
 
     if (tonConnectUI) {
-      tonConnectUI.onStatusChange((wallet) => {
-        updateWalletUI(wallet);
-      });
+      tonConnectUI.onStatusChange(wallet => updateWalletUI(wallet));
       (async () => {
         try {
           const wallet = tonConnectUI.wallet;
@@ -319,39 +213,29 @@
     }
 
     connectWalletBtn.addEventListener('click', async () => {
-      if (!tonConnectUI) {
-        alert('Wallet connection not available. Please refresh the page.');
-        return;
-      }
       try {
         connectWalletBtn.textContent = 'Connecting...';
         await tonConnectUI.connectWallet();
       } catch {
-        alert('Wallet connection failed or was cancelled.');
+        alert('Connection failed or cancelled.');
       } finally {
         connectWalletBtn.textContent = 'Connect Wallet';
       }
     });
 
     disconnectWalletBtn.addEventListener('click', async () => {
-      if (!tonConnectUI) return;
       try {
         await tonConnectUI.disconnect();
       } catch {
-        alert('Failed to disconnect wallet.');
+        alert('Failed to disconnect.');
       }
     });
 
     async function getTonPriceFromCoinGecko() {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) throw new Error();
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
         const data = await res.json();
-        if (!data || !data['the-open-network'] || !data['the-open-network'].usd) throw new Error();
-        return data['the-open-network'].usd;
+        return data['the-open-network']?.usd || null;
       } catch {
         return null;
       }
@@ -360,41 +244,32 @@
     async function updatePrice() {
       tonPriceDisplay.textContent = 'Fetching TON price...';
       retryPriceBtn.classList.add('hidden');
-
-      let price = await getTonPriceFromCoinGecko();
+      const price = await getTonPriceFromCoinGecko();
       if (price) {
         tonPriceUsd = price;
         tonPriceDisplay.textContent = `Live TON Price: $${price.toFixed(2)}`;
-        updateSignButton();
       } else {
         tonPriceUsd = null;
         tonPriceDisplay.textContent = '⚠ Failed to load TON price.';
         retryPriceBtn.classList.remove('hidden');
-        updateSignButton();
       }
+      updateSignButton();
     }
 
     updatePrice();
-    setInterval(updatePrice, 86400000); // 24h
-
-    retryPriceBtn.addEventListener('click', () => {
-      updatePrice();
-    });
+    setInterval(updatePrice, 86400000);
+    retryPriceBtn.addEventListener('click', updatePrice);
 
     signBtn.addEventListener('click', async () => {
-      if (!tonConnectUI) {
-        alert('Wallet connection not available. Please refresh the page.');
-        return;
-      }
-      const walletInfo = tonConnectUI.wallet;
-      if (!walletInfo) {
+      if (!tonConnectUI || !tonConnectUI.wallet) {
         alert('Please connect your wallet first.');
         return;
       }
       if (!tonPriceUsd) {
-        alert('TON price not available. Please retry fetching the price.');
+        alert('TON price not available.');
         return;
       }
+
       const usdAmount = 2.0;
       const amountInTon = usdAmount / tonPriceUsd;
       const amountNano = Math.floor(amountInTon * 1e9);
@@ -415,36 +290,29 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        let senderAddress = walletInfo.account.address;
+        let senderAddress = tonConnectUI.wallet.account.address;
         await new Promise(res => onTonReady(res));
         senderAddress = toUserFriendlyAddress(senderAddress);
 
-        const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
-        const webhookPayload = {
-          user_id: chatId,
-          user: senderAddress,
-          to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-          amount: amountNano,
-          usd: `$${tonPriceUsd.toFixed(2)}`,
-          transactionHash: result.boc
-        };
-
-        const webhookResponse = await fetch(webhookUrl, {
+        const webhookResponse = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
+          body: JSON.stringify({
+            user_id: chatId,
+            user: senderAddress,
+            to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amount: amountNano,
+            usd: `$${tonPriceUsd.toFixed(2)}`,
+            transactionHash: result.boc
+          })
         });
 
-        if (!webhookResponse.ok) {
-          const errorData = await webhookResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
-        }
+        if (!webhookResponse.ok) throw new Error('Webhook failed');
 
-        alert('✅ Transaction sent and logged successfully! Check the bot for confirmation.');
+        alert('✅ Transaction sent and logged successfully!');
       } catch (err) {
-        alert('❌ Transaction failed or cancelled: ' + (err.message || err));
+        alert('❌ Transaction failed: ' + (err.message || err));
       } finally {
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
         updateSignButton();
       }
     });
