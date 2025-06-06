@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.coingecko.com https://maxeng-webhook-server.onrender.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.coingecko.com https://maxengbot.onrender.com https://maxeng-webhook-server.onrender.com;">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <title>Sign TON Transaction - MaxEng</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@tonconnect/ui@2.0.6/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
+  <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -92,6 +94,31 @@
       box-shadow: none;
       transform: none;
     }
+    #walletInfo {
+      font-size: 0.95rem;
+      color: #a3bffa;
+      word-break: break-all;
+      max-width: 320px;
+      margin: 10px auto;
+      opacity: 0;
+      animation: fadeIn 1s ease-in forwards;
+      animation-delay: 0.7s;
+    }
+    #tonPriceDisplay {
+      font-size: 0.95rem;
+      color: #a3bffa;
+      margin: 10px 0;
+      max-width: 320px;
+      opacity: 0;
+      animation: fadeIn 1s ease-in forwards;
+      animation-delay: 0.9s;
+    }
+    #retryPriceBtn {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      max-width: 150px;
+      margin-top: 5px;
+    }
     .status {
       margin-top: 25px;
       font-size: 0.95rem;
@@ -126,6 +153,9 @@
       animation: pulse 2s infinite;
       z-index: 0;
     }
+    .hidden {
+      display: none;
+    }
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(60px); }
       to { opacity: 1; transform: translateY(0); }
@@ -148,7 +178,7 @@
       .info { font-size: 0.9rem; }
       button { font-size: 1rem; padding: 12px 30px; max-width: 280px; }
       .container { padding: 25px; }
-      .status { font-size: 0.85rem; padding: 10px 15px; }
+      .status, #walletInfo, #tonPriceDisplay { font-size: 0.85rem; padding: 10px 15px; }
       .footer { font-size: 0.8rem; bottom: 15px; }
     }
   </style>
@@ -158,31 +188,110 @@
     <h1>Sign TON Transaction</h1>
     <div class="info">Send $2 worth of TON to MaxEng’s wallet in just a few clicks!</div>
     <div id="ton-connect"></div>
-    <button id="signBtn" disabled aria-label="Sign TON Transaction">Sign Transaction</button>
+    <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
+    <div id="walletInfo" class="hidden"></div>
+    <button id="signBtn" disabled aria-label="Sign $2 TON Transaction">Sign $2 TON Transaction</button>
+    <div id="tonPriceDisplay">Fetching TON price...</div>
+    <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
     <div class="status" id="status">Initializing <span class="loader"></span></div>
   </div>
   <div class="footer">🔒 Powered by Gigi Labs</div>
 
   <script>
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: window.location.origin + '/tonconnect-manifest.json',
-      buttonRootId: 'ton-connect'
-    });
-
-    const signBtn = document.getElementById('signBtn');
-    const statusDiv = document.getElementById('status');
-    const toAddress = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
-
+    let tonConnectUI;
+    let tonPriceUsd = null;
     let cachedPrice = null;
     let lastPriceFetch = 0;
 
-    tonConnectUI.onStatusChange(wallet => {
-      if (wallet) {
+    try {
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect'
+      });
+      console.log('TON Connect UI initialized successfully');
+-constant address = 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN';
+    } catch (err) {
+      console.error('Failed to initialize TON Connect UI:', err);
+      document.getElementById('status').innerHTML = '❌ Failed to initialize wallet connection';
+    }
+
+    const connectWalletBtn = document.querySelector('#ton-connect button');
+    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+    const walletInfoDiv = document.getElementById('walletInfo');
+    const signBtn = document.getElementById('signBtn');
+    const tonPriceDisplay = document.getElementById('tonPriceDisplay');
+    const retryPriceBtn = document.getElementById('retryPriceBtn');
+    const statusDiv = document.getElementById('status');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
+    if (!urlParams.get('chat_id') && !urlParams.get('user_id')) {
+      statusDiv.innerHTML = '⚠ Please access via /subscribe in Telegram';
+      signBtn.disabled = true;
+    }
+
+    function updateSignButton() {
+      const wallet = tonConnectUI?.wallet;
+      if (wallet && tonPriceUsd) {
         signBtn.disabled = false;
-        statusDiv.innerHTML = `Connected: ${wallet.device.appName}`;
+        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
       } else {
         signBtn.disabled = true;
+        signBtn.textContent = 'Sign $2 TON Transaction';
+      }
+    }
+
+    function updateWalletUI(wallet) {
+      if (wallet) {
+        let address = wallet.account?.address || 'Unknown Address';
+        if (!/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
+          try {
+            const tonAddress = window.ton.Address.parse(address);
+            address = tonAddress.toString({ bounceable: true, urlSafe: true });
+          } catch (err) {
+            if (wallet.account?.publicKey) {
+              const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
+              const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
+              address = walletContract.address.toString({ bounceable: true, urlSafe: true });
+            }
+          }
+        }
+        walletInfoDiv.textContent = `Connected: ${address}`;
+        walletInfoDiv.classList.remove('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+        statusDiv.innerHTML = `Connected: ${wallet.device.appName}`;
+      } else {
+        walletInfoDiv.textContent = '';
+        walletInfoDiv.classList.add('hidden');
+        disconnectWalletBtn.classList.add('hidden');
         statusDiv.innerHTML = 'Please connect your TON Wallet';
+      }
+      updateSignButton();
+    }
+
+    if (tonConnectUI) {
+      tonConnectUI.onStatusChange(wallet => {
+        console.log('Wallet status changed:', wallet);
+        updateWalletUI(wallet);
+      });
+
+      (async () => {
+        try {
+          const wallet = await tonConnectUI.getWallet();
+          updateWalletUI(wallet);
+        } catch (err) {
+          console.error('Error checking initial wallet status:', err);
+        }
+      })();
+    }
+
+    disconnectWalletBtn.addEventListener('click', async () => {
+      try {
+        await tonConnectUI.disconnect();
+        statusDiv.innerHTML = '✅ Wallet disconnected';
+      } catch (err) {
+        console.error('Disconnect error:', err);
+        statusDiv.innerHTML = '❌ Failed to disconnect wallet';
       }
     });
 
@@ -205,7 +314,8 @@
           return cachedPrice;
         } catch (err) {
           if (attempt === 3) {
-            statusDiv.innerHTML = '❌ Failed to fetch TON price';
+            tonPriceDisplay.textContent = '⚠ Failed to load TON price';
+            retryPriceBtn.classList.remove('hidden');
             throw err;
           }
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
@@ -213,55 +323,84 @@
       }
     }
 
+    async function updatePrice() {
+      tonPriceDisplay.textContent = 'Fetching TON price...';
+      retryPriceBtn.classList.add('hidden');
+      statusDiv.innerHTML = 'Fetching TON price... <span class="loader"></span>';
+
+      try {
+        const priceData = await getTonPrice();
+        tonPriceUsd = priceData.usd;
+        tonPriceDisplay.textContent = `Live TON Price: $${tonPriceUsd.toFixed(2)}`;
+        updateSignButton();
+      } catch (err) {
+        console.error('Price fetch error:', err);
+        statusDiv.innerHTML = '❌ Failed to fetch TON price';
+      }
+    }
+
+    updatePrice();
+    setInterval(updatePrice, 86400000);
+
+    retryPriceBtn.addEventListener('click', updatePrice);
+
     signBtn.addEventListener('click', async () => {
-      if (!tonConnectUI.wallet) {
+      if (!tonConnectUI?.wallet) {
         statusDiv.innerHTML = '❌ Please connect your TON Wallet';
         return;
       }
 
+      if (!tonPriceUsd) {
+        statusDiv.innerHTML = '❌ TON price not available';
+        return;
+      }
+
       signBtn.disabled = true;
-      statusDiv.innerHTML = 'Fetching TON price... <span class="loader"></span>';
+      statusDiv.innerHTML = 'Awaiting transaction approval... <span class="loader"></span>';
 
       try {
-        const { ton: tonAmount, usd: tonPrice } = await getTonPrice();
-        const tonInNano = Math.floor(parseFloat(tonAmount) * 1e9);
-        const user_id = new URLSearchParams(window.location.search).get('user_id') || 'anonymous';
-
-        statusDiv.innerHTML = 'Awaiting transaction approval... <span class="loader"></span>';
-
-        const result = await tonConnectUI.sendTransaction({
+        const tonAmount = 2 / tonPriceUsd;
+        const tonInNano = Math.floor(tonAmount * 1e9);
+        const transaction = {
           validUntil: Math.floor(Date.now() / 1000) + 600,
           messages: [{
-            address: toAddress,
-            amount: tonInNano.toString()
+            address: address,
+            amount: tonInNano.toString(),
+            payload: window.ton.TonWeb.utils.toBase64(`chat_id:${chatId}`)
           }]
-        });
+        };
 
+        const result = await tonConnectUI.sendTransaction(transaction);
         statusDiv.innerHTML = '✅ Transaction sent! Notifying server... <span class="loader"></span>';
 
-        const webhookRes = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
+        const webhookPayload = {
+          chat_id: chatId,
+          user_id: chatId,
+          senderAddress: tonConnectUI.wallet.account.address,
+          recipientAddress: address,
+          amountInTon: tonAmount,
+          usdAmount: 2,
+          transactionHash: result.boc,
+          usd: `$${tonPriceUsd.toFixed(2)}`
+        };
+
+        const webhookResponse = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: user_id,
-            user: tonConnectUI.wallet.account.address,
-            to: toAddress,
-            amount: tonInNano,
-            usd: `$${tonPrice.toFixed(2)}`
-          })
+          body: JSON.stringify(webhookPayload)
         });
 
-        if (!webhookRes.ok) {
-          const errorData = await webhookRes.json();
-          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookRes.status}`);
+        if (!webhookResponse.ok) {
+          const errorData = await webhookResponse.json();
+          throw new Error(errorData.error || `Webhook failed: HTTP ${webhookResponse.status}`);
         }
 
         statusDiv.innerHTML = '✅ Transaction logged! Telegram notified.';
       } catch (err) {
+        console.error('Kaboom! Transaction error:', err);
         statusDiv.innerHTML = `❌ Error: ${err.message}`;
-        console.error(err);
       } finally {
-        signBtn.disabled = false;
+        updateSignButton();
       }
     });
   </script>
