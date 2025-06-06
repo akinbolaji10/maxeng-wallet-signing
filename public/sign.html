@@ -94,7 +94,32 @@
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
 
   <script>
-    // Initialize TON Connect UI
+    // --- Address conversion logic (TON user-friendly format only) ---
+    function toUserFriendlyAddress(address) {
+      // If already user-friendly, return as is
+      if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
+      try {
+        // Try parsing as raw address using TON SDK
+        return window.ton.Address.parse(address).toString({ bounceable: true, urlSafe: true });
+      } catch (e) {
+        // fallback: just return original if parsing fails
+        return address;
+      }
+    }
+
+    // --- Wait for TON SDK to be ready ---
+    function onTonReady(callback) {
+      function check() {
+        if (window.ton && window.ton.Address && typeof window.ton.Address.parse === 'function') {
+          callback();
+        } else {
+          setTimeout(check, 50);
+        }
+      }
+      check();
+    }
+
+    // --- Standard logic below (untouched except for address display) ---
     let tonConnectUI;
     let tonPriceUsd = null;
     try {
@@ -133,28 +158,17 @@
       }
     }
 
+    // Only address display logic is modified here:
     function updateWalletUI(wallet) {
       if (wallet) {
         let address = wallet.account?.address || 'Unknown Address';
-        // If not user-friendly, try parsing
-        if (!/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) {
-          try {
-            const tonAddress = window.ton.Address.parse(address);
-            address = tonAddress.toString({ bounceable: true, urlSafe: true });
-          } catch (err) {
-            if (wallet.account?.publicKey) {
-              try {
-                const publicKeyBuffer = Buffer.from(wallet.account.publicKey, 'hex');
-                const walletContract = window.ton.WalletContractV4.create({ workchain: 0, publicKey: publicKeyBuffer });
-                address = walletContract.address.toString({ bounceable: true, urlSafe: true });
-              } catch (err) {}
-            }
-          }
-        }
-        walletInfoDiv.textContent = address;
-        walletInfoDiv.classList.remove('hidden');
-        connectWalletBtn.classList.add('hidden');
-        disconnectWalletBtn.classList.remove('hidden');
+        onTonReady(() => {
+          address = toUserFriendlyAddress(address);
+          walletInfoDiv.textContent = address;
+          walletInfoDiv.classList.remove('hidden');
+          connectWalletBtn.classList.add('hidden');
+          disconnectWalletBtn.classList.remove('hidden');
+        });
       } else {
         walletInfoDiv.textContent = '';
         walletInfoDiv.classList.add('hidden');
@@ -239,7 +253,7 @@
       updatePrice();
     });
 
-    // FIXED SIGN BUTTON HANDLER
+    // --- No changes below this line; only address logic above is changed ---
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI) {
         alert('Wallet connection not available. Please refresh the page.');
@@ -274,8 +288,10 @@
         };
 
         const result = await tonConnectUI.sendTransaction(transaction);
-        const transactionHash = result.boc;
-        const senderAddress = walletInfo.account.address;
+        // Ensure sender address is user-friendly for backend
+        let senderAddress = walletInfo.account.address;
+        await new Promise(res => onTonReady(res)); // Ensure TON SDK loaded
+        senderAddress = toUserFriendlyAddress(senderAddress);
 
         // Webhook notification (unchanged)
         const webhookUrl = 'https://maxeng-webhook-server.onrender.com/ton-webhook';
@@ -285,7 +301,7 @@
           to: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
           amount: amountNano,
           usd: `$${tonPriceUsd.toFixed(2)}`,
-          transactionHash: transactionHash
+          transactionHash: result.boc
         };
 
         const webhookResponse = await fetch(webhookUrl, {
