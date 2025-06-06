@@ -158,22 +158,24 @@
       }
     }
 
-    // Only address display logic is modified here:
+    // --- Corrected updateWalletUI Function ---
     function updateWalletUI(wallet) {
       if (wallet) {
+        // Always hide Connect Wallet and show Disconnect
+        connectWalletBtn.classList.add('hidden');
+        disconnectWalletBtn.classList.remove('hidden');
+        walletInfoDiv.classList.remove('hidden');
+        // Address conversion (may be async)
         let address = wallet.account?.address || 'Unknown Address';
         onTonReady(() => {
           address = toUserFriendlyAddress(address);
           walletInfoDiv.textContent = address;
-          walletInfoDiv.classList.remove('hidden');
-          connectWalletBtn.classList.add('hidden');
-          disconnectWalletBtn.classList.remove('hidden');
         });
       } else {
-        walletInfoDiv.textContent = '';
-        walletInfoDiv.classList.add('hidden');
         connectWalletBtn.classList.remove('hidden');
         disconnectWalletBtn.classList.add('hidden');
+        walletInfoDiv.classList.add('hidden');
+        walletInfoDiv.textContent = '';
       }
       updateSignButton();
     }
@@ -253,7 +255,6 @@
       updatePrice();
     });
 
-    // --- No changes below this line; only address logic above is changed ---
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI) {
         alert('Wallet connection not available. Please refresh the page.');
