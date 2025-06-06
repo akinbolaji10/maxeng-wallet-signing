@@ -87,33 +87,10 @@
     .character {
       position: absolute;
       width: 32px;
-      height: 48px; /* Adjusted for CSS character */
-      background: transparent;
+      height: 48px;
       will-change: transform;
       transition: transform 1s linear;
-    }
-    /* Simple CSS character to replace image */
-    .character::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 8px;
-      width: 16px;
-      height: 16px;
-      background: #fff; /* Head */
-      border: 1px solid #000;
-      border-radius: 50%;
-    }
-    .character::after {
-      content: '';
-      position: absolute;
-      top: 16px;
-      left: 4px;
-      width: 24px;
-      height: 32px;
-      background: #add8e6; /* Body */
-      border: 1px solid #000;
-      border-radius: 4px;
+      z-index: 1; /* Behind UI */
     }
     .flipped {
       transform: scaleX(-1);
@@ -122,13 +99,12 @@
       position: absolute;
       font-size: 16px;
       animation: attackMove 1s linear forwards;
+      z-index: 2; /* Attacks above characters */
     }
     @keyframes attackMove {
       from { transform: translateX(0); opacity: 1; }
       to { transform: translateX(100px); opacity: 0; }
     }
-    /* Minimal variation to differentiate characters */
-    .character:nth-child(odd)::after { background: #b0c4de; }
   </style>
 </head>
 <body>
@@ -142,16 +118,19 @@
 
   <!-- === ANIMATED CHARACTERS SCRIPT === -->
   <script>
-    const totalCharacters = 30;
+    const totalCharacters = 20; // Set to 20 (10 Naruto, 10 Ippo)
+    const narutoSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABMXPacAAABh0lEQVR4nO2WTU4DMRCGP89zBI1MgAH0IQNISkBRMEFQ0SAF0EUICehJEgJ2CEIpA2eOLrjFFLaTxq07e+aU+Rz/v1u7W1tba09X5QQAyfCzCCKHGMpyfGgLFEOIRB6ivXGM9XHKwcEzP1iiy9Y4KHGMp2eCwgWsv2Q5KIQBHqKfY+PSoY4f1/fZ9Uwl+9HcwjV4W1pCKGvS9gzSrgyQ/KeP1H+dOggBeLBKykgfYjNeBGXAjf+RkSgK2mAo7gIuI5bH0WrIRYURaaDk9zsoB2NbgzUQDW9dhfa+CUBFwA60OYnrk6SVsOgPZz4c5+EXDXQLAQ+wtpJyxDoGjV1h2gK6F5TDKPy9ccq6rfdHxALuf07xFoC2kU9qDIlxKc5nTYHlQlA/NKnLO6RWg+V91QkAHSoQk8NsTJ9dbHGH9dD4WlQUxMrfvc5fymwr+qzDTRAAAAAElFTkSuQmCC"; // Updated Naruto Base64 (32x48px)
+    const ippoSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABMXPacAAABiUlEQVR4nO2WTUoDQRCG39pBEIWoApVQ0rAVREPgLgJSAQXgAaAgkZMgAHUAl0JAQZIE1IAeJNZnrHyjO9qTLzJnC7Lv7u+v7eygAhjN1jj2HK9SiGEMqRCEL4t2DG93JbwZkSMzfhNU3nIsrBFkk5EGPfwngDNj9CKKiOkiAX8DZgX3RTZjATxHGo5H1MPAZzVHLkk0TFeAaQkAmhPO5zXhrqvl8JhTKijClPIAE+xGEC0YMK1hNVTDGgnvm7GE2RMGhEm8Xym7whV6FcAxFr2A8xEP2XMm8zvhAOdM2scj++WI+B12FYgo6FnZhrAnKgAR9+yKDOP1IDRm7cGo7QIEVUdOmzIG5JUb7HKhz5eVmjIddMZBv9J9ZDKyfkf7Xw/3raU9Iit+z9gAAAABJRU5ErkJggg=="; // Updated Ippo Base64 (32x48px)
 
     function random(min, max) {
       return Math.random() * (max - min) + min;
     }
 
     for (let i = 0; i < totalCharacters; i++) {
-      const char = document.createElement('div'); // Changed from <img> to <div>
+      const char = document.createElement('img');
+      char.src = i % 2 === 0 ? narutoSrc : ippoSrc; // Alternate between Naruto and Ippo
       char.className = 'character';
-      char.style.top = random(0, window.innerHeight - 48) + 'px'; // Adjusted for new character height
+      char.style.top = random(0, window.innerHeight - 48) + 'px';
       char.style.left = random(0, window.innerWidth - 32) + 'px';
       document.body.appendChild(char);
 
