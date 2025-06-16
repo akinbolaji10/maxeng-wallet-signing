@@ -16,13 +16,11 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      /* Updated background: Night sky gradient */
       background: linear-gradient(135deg, #1a2a6c, #000428);
       color: #fff;
       overflow: hidden;
       position: relative;
     }
-    /* Starry Night Sky Animation */
     body::before {
       content: '';
       position: absolute;
@@ -136,7 +134,6 @@
     .hidden {
       display: none;
     }
-    /* === Glowing Moving Moon === */
     #moon-container {
       position: absolute;
       left: 0; top: 0;
@@ -151,7 +148,6 @@
       transition: filter 0.2s;
       display: block;
     }
-    /* Footer style (bottom right) */
     .footer {
       position: fixed;
       bottom: 12px;
@@ -203,14 +199,11 @@
   <button id="connectWalletBtn">Connect Wallet</button>
   <div id="walletInfo" class="hidden"></div>
   <button id="disconnectWalletBtn" class="hidden">Disconnect Wallet</button>
-  <button id="signBtn" disabled>Sign $2 TON Transaction</button>
+  <button id="signBtn" disabled>Sign Transaction</button>
   <div id="tonPriceDisplay">Fetching TON price...</div>
   <button id="retryPriceBtn" class="hidden">Retry Price Fetch</button>
-  <!-- Footer -->
   <div class="footer">Powered by GigiLabs</div>
-  <!-- === TON LOGIC === -->
   <script>
-    // Realistic Moving/Glowing Moon
     (function() {
       const moon = document.querySelector('.moon-svg');
       const moonContainer = document.getElementById('moon-container');
@@ -242,7 +235,6 @@
       });
       animate();
     })();
-    // === TON WALLET LOGIC ===
     function toUserFriendlyAddress(address) {
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
@@ -288,10 +280,10 @@
       const wallet = tonConnectUI?.wallet;
       if (wallet && tonPriceUsd && chatId) {
         signBtn.disabled = false;
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+        signBtn.textContent = `Sign Transaction`;
       } else {
         signBtn.disabled = true;
-        signBtn.textContent = 'Sign $2 TON Transaction';
+        signBtn.textContent = 'Sign Transaction';
       }
     }
     function updateWalletUI(wallet) {
@@ -375,7 +367,7 @@
       }
     }
     updatePrice();
-    setInterval(updatePrice, 86400000); // 24h
+    setInterval(updatePrice, 86400000);
     retryPriceBtn.addEventListener('click', () => {
       updatePrice();
     });
@@ -435,7 +427,7 @@
       } catch (err) {
         alert('❌ Transaction failed or cancelled: ' + (err.message || err));
       } finally {
-        signBtn.textContent = `Sign $2 TON Transaction (${(2 / tonPriceUsd).toFixed(4)} TON)`;
+        signBtn.textContent = `Sign Transaction`;
         updateSignButton();
       }
     });
