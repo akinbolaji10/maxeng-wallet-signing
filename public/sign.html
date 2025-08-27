@@ -385,7 +385,7 @@
         alert('TON price not available. Please retry fetching the price.');
         return;
       }
-      const usdAmount = 2.0;
+      const usdAmount = 5.0; // Changed from 2.0 to 5.0
       const amountInTon = usdAmount / tonPriceUsd;
       const amountNano = Math.floor(amountInTon * 1e9);
       try {
