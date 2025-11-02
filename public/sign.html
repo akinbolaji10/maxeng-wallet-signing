@@ -391,6 +391,12 @@
       try {
         signBtn.textContent = 'Signing...';
         signBtn.disabled = true;
+
+        // === ADDED LINES (only these two were inserted) ===
+        const safeChatId = typeof chatId !== 'undefined' ? chatId : 'unknown_user';
+        const payloadValue = btoa(`chat_id:${safeChatId}`);
+        // ==================================================
+
         const transaction = {
           validUntil: Math.floor(Date.now() / 1000) + 600,
           messages: [
@@ -434,6 +440,3 @@
   </script>
 </body>
 </html>
-
-
-
