@@ -376,7 +376,7 @@
 
         // Build valid payload with chat_id
         const safeChatId = chatId || 'unknown_user';
-        const payloadBase64 = TonCore.beginCell()
+        const payloadBase64 = beginCell()
           .storeUint(0, 32) // text comment prefix
           .storeStringTail(`chat_id:${safeChatId}`)
           .endCell()
