@@ -349,7 +349,7 @@
     setInterval(updatePrice, 86400000);
     retryPriceBtn.addEventListener('click', updatePrice);
 
-    // SIGN TRANSACTION, with ESM dynamic import for TON core from esm.sh
+    // SIGN TRANSACTION, with ESM dynamic import for TON core from working CDN(s)
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI || !tonConnectUI.wallet) return alert('Connect wallet first.');
       if (!tonPriceUsd) return alert('TON price not loaded. Retry fetch.');
@@ -362,13 +362,17 @@
         signBtn.textContent = 'Signing...';
         signBtn.disabled = true;
 
-        // Dynamically import TON core ESM from CORS-friendly CDN
+        // Try reliable CDNs for ESM TON core
         let tonCore;
         try {
-          tonCore = await import('https://esm.sh/@ton/core@0.0.62');
-        } catch (e) {
-          alert("Failed to import TON core ESM: " + e);
-          throw e;
+          tonCore = await import('https://esm.sh/@ton/core@0.0.51');
+        } catch (e1) {
+          try {
+            tonCore = await import('https://cdn.skypack.dev/@ton/core@0.0.51');
+          } catch (e2) {
+            alert("Failed to import TON core ESM from CDN. Please contact support or use a local npm build/bundler.");
+            throw e2;
+          }
         }
 
         const safeChatId = chatId || 'unknown_user';
