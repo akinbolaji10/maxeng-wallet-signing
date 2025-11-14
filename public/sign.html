@@ -7,9 +7,7 @@
 
   <!-- TON Connect UI -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <!-- TON Core (for building cells) -->
-  <script src="https://unpkg.com/@ton/core@latest/dist/index.global.js"></script>
-  <!-- Old ton.js (optional, for Address parsing) -->
+  <!-- TON.js (for Address parsing) -->
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
 
@@ -205,6 +203,29 @@
   <div class="footer">Powered by GigiLabs</div>
 
   <script>
+    // === DYNAMIC LOAD @ton/core ===
+    let tonCoreLoaded = false;
+    function loadTonCore() {
+      return new Promise((resolve, reject) => {
+        if (window.beginCell) {
+          tonCoreLoaded = true;
+          return resolve();
+        }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@ton/core@latest/dist/index.global.js';
+        script.onload = () => {
+          if (window.beginCell) {
+            tonCoreLoaded = true;
+            resolve();
+          } else {
+            reject(new Error('beginCell not found after load'));
+          }
+        };
+        script.onerror = () => reject(new Error('Failed to load @ton/core'));
+        document.head.appendChild(script);
+      });
+    }
+
     // Moon animation
     (function() {
       const moon = document.querySelector('.moon-svg');
@@ -237,7 +258,6 @@
       animate();
     })();
 
-    // Address formatting
     function toUserFriendlyAddress(address) {
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
@@ -258,17 +278,14 @@
       check();
     }
 
-    // TON Connect UI
     let tonConnectUI;
     let tonPriceUsd = null;
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
-      console.log('TON Connect UI initialized');
     } catch (err) {
-      console.error('TON Connect init failed:', err);
-      alert('Failed to initialize wallet. Refresh the page.');
+      alert('Failed to initialize wallet connection. Please refresh.');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -281,12 +298,12 @@
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
 
     if (!chatId || chatId === 'anonymous') {
-      alert('Error: chat_id or user_id missing. Open via Telegram bot.');
+      alert('Error: chat_id or user_id not found in URL.');
       signBtn.disabled = true;
     }
 
     function updateSignButton() {
-      signBtn.disabled = !(tonConnectUI?.wallet && tonPriceUsd && chatId);
+      signBtn.disabled = !(tonConnectUI?.wallet && tonPriceUsd && tonCoreLoaded && chatId);
     }
 
     function updateWalletUI(wallet) {
@@ -308,9 +325,7 @@
 
     if (tonConnectUI) {
       tonConnectUI.onStatusChange(updateWalletUI);
-      (async () => {
-        try { updateWalletUI(tonConnectUI.wallet); } catch {}
-      })();
+      (async () => { try { updateWalletUI(tonConnectUI.wallet); } catch {} })();
     }
 
     connectWalletBtn.addEventListener('click', async () => {
@@ -330,7 +345,6 @@
       try { await tonConnectUI.disconnect(); } catch { alert('Disconnect failed.'); }
     });
 
-    // Price fetch
     async function getTonPriceFromCoinGecko() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
@@ -361,10 +375,20 @@
     setInterval(updatePrice, 86400000);
     retryPriceBtn.addEventListener('click', updatePrice);
 
-    // SIGN TRANSACTION (FIXED)
+    // SIGN TRANSACTION
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI || !tonConnectUI.wallet) return alert('Connect wallet first.');
-      if (!tonPriceUsd) return alert('TON price not loaded. Retry fetch.');
+      if (!tonPriceUsd) return alert('TON price not loaded.');
+      if (!tonCoreLoaded) {
+        signBtn.disabled = true;
+        try {
+          await loadTonCore();
+          updateSignButton();
+        } catch (err) {
+          alert('Failed to load TON Core: ' + err.message);
+          return;
+        }
+      }
 
       const usdAmount = 5.0;
       const amountInTon = usdAmount / tonPriceUsd;
@@ -374,10 +398,9 @@
         signBtn.textContent = 'Signing...';
         signBtn.disabled = true;
 
-        // Build valid payload with chat_id
         const safeChatId = chatId || 'unknown_user';
         const payloadBase64 = beginCell()
-          .storeUint(0, 32) // text comment prefix
+          .storeUint(0, 32)
           .storeStringTail(`chat_id:${safeChatId}`)
           .endCell()
           .toBoc()
@@ -404,24 +427,28 @@
           transactionHash: result.boc
         };
 
-        const webhookRes = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
+        const res = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(webhookPayload)
         });
 
-        if (!webhookRes.ok) {
-          const err = await webhookRes.json().catch(() => ({}));
-          throw new Error(err.error || `Webhook failed: ${webhookRes.status}`);
-        }
+        if (!res.ok) throw new Error(`Webhook failed: ${res.status}`);
 
-        alert('Transaction sent & logged! Check bot for confirmation.');
+        alert('Transaction sent and logged successfully!');
       } catch (err) {
         alert('Transaction failed: ' + (err.message || err));
       } finally {
         signBtn.textContent = 'Sign Transaction';
         updateSignButton();
       }
+    });
+
+    // AUTO-LOAD TON CORE
+    loadTonCore().then(() => {
+      updateSignButton();
+    }).catch(() => {
+      tonPriceDisplay.textContent = 'Error: TON Core failed to load.';
     });
   </script>
 </body>
