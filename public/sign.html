@@ -1,17 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MaxEng Wallet Signing</title>
 
   <!-- TON Connect UI -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <!-- Keep the global build (may or may not expose beginCell) -->
-  <script src="https://unpkg.com/@ton/core@latest/dist/index.global.js"></script>
-  <!-- Old ton.js (optional, for Address parsing) -->
+  <!-- Old TON.js (for Address parsing) -->
   <script src="https://unpkg.com/@ton/ton@latest/dist/ton.min.js"></script>
-  <!-- Buffer polyfill (optional) -->
+  <!-- Buffer polyfill (optional for base64, but not required with btoa fallback) -->
   <script src="https://unpkg.com/buffer@latest/index.min.js"></script>
 
   <style>
@@ -61,20 +59,95 @@
       z-index: 1;
       pointer-events: none;
     }
-    h2 { margin-bottom: 20px; font-size: 36px; font-weight: bold; text-align: center; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); z-index: 2; position: relative; }
-    button {
-      width: 250px; padding: 10px; margin: 10px 0; font-size: 16px; font-weight: bold;
-      border: 2px solid #fff; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 2; position: relative;
+    h2 {
+      margin-bottom: 20px;
+      font-size: 36px;
+      font-weight: bold;
+      text-align: center;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      position: relative;
     }
-    #connectWalletBtn::before { content: 'Play'; margin-right: 10px; font-size: 16px; color: #fff; }
-    button:hover { background: rgba(255,255,255,0.3); }
-    button:disabled { background: rgba(255,255,255,0.05); cursor: not-allowed; opacity: 0.6; }
-    #walletInfo { margin: 10px 0; font-size: 14px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); word-break: break-all; text-align: center; max-width: 250px; z-index: 2; position: relative; }
-    #tonPriceDisplay { margin: 10px 0; font-size: 14px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-align: center; max-width: 250px; z-index: 2; position: relative; }
-    #retryPriceBtn { width: 150px; padding: 5px; font-size: 12px; margin-top: 5px; }
-    .hidden { display: none; }
-    .footer { position: fixed; bottom: 12px; right: 24px; text-align: right; z-index: 3; color: #fff; font-size: 1.1em; letter-spacing: 2px; opacity: 0.75; text-shadow: 0 0 8px #000, 0 0 8px #1a2a6c; font-family: Arial, sans-serif; pointer-events: none; user-select: none; }
+    button {
+      width: 250px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      font-weight: bold;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+      z-index: 2;
+      position: relative;
+    }
+    #connectWalletBtn::before {
+      content: 'Play';
+      margin-right: 10px;
+      font-size: 16px;
+      color: #fff;
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    button:disabled {
+      background: rgba(255, 255, 255, 0.05);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    #walletInfo {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      word-break: break-all;
+      text-align: center;
+      max-width: 250px;
+      z-index: 2;
+      position: relative;
+    }
+    #tonPriceDisplay {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      max-width: 250px;
+      z-index: 2;
+      position: relative;
+    }
+    #retryPriceBtn {
+      width: 150px;
+      padding: 5px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    .footer {
+      position: fixed;
+      bottom: 12px;
+      right: 24px;
+      text-align: right;
+      z-index: 3;
+      color: #fff;
+      font-size: 1.1em;
+      letter-spacing: 2px;
+      opacity: 0.75;
+      text-shadow: 0 0 8px #000, 0 0 8px #1a2a6c;
+      font-family: Arial, sans-serif;
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -88,7 +161,7 @@
   <div class="footer">Powered by GigiLabs</div>
 
   <script>
-    // Utility: friendly address conversion using ton.min.js if present
+    // Address formatting
     function toUserFriendlyAddress(address) {
       if (/^[UE][QF][A-Za-z0-9_-]{46}$/.test(address)) return address;
       try {
@@ -100,59 +173,9 @@
       }
     }
 
-    // Helper: convert Uint8Array -> base64 safely (works without Buffer)
-    function uint8ArrayToBase64(u8) {
-      if (typeof Buffer !== 'undefined') return Buffer.from(u8).toString('base64');
-      // efficient chunked conversion to avoid stack limits for large arrays
-      let CHUNK_SIZE = 0x8000;
-      let index = 0;
-      let length = u8.length;
-      let result = '';
-      while (index < length) {
-        let slice = u8.subarray(index, Math.min(index + CHUNK_SIZE, length));
-        result += String.fromCharCode.apply(null, slice);
-        index += CHUNK_SIZE;
-      }
-      return btoa(result);
-    }
-
-    // Helper: find beginCell on common globals or dynamic-import @ton/core module
-    async function resolveBeginCell() {
-      // quick checks for well-known globals
-      if (typeof beginCell === 'function') return { fn: beginCell, source: 'global beginCell' };
-      const candidates = [
-        { obj: window.TonCore, name: 'window.TonCore' },
-        { obj: window.tonCore, name: 'window.tonCore' },
-        { obj: window.TON_CORE, name: 'window.TON_CORE' },
-        { obj: window.ton, name: 'window.ton' },
-        { obj: window.Ton, name: 'window.Ton' }
-      ];
-      for (const c of candidates) {
-        if (c.obj && typeof c.obj.beginCell === 'function') {
-          return { fn: c.obj.beginCell.bind(c.obj), source: c.name + '.beginCell' };
-        }
-        if (typeof c.obj === 'function' && c.obj.name === 'beginCell') {
-          return { fn: c.obj, source: c.name + ' (function)' };
-        }
-      }
-
-      // attempt dynamic import of ESM build from unpkg as fallback
-      // This tends to succeed where the global build didn't expose beginCell
-      const esmUrl = 'https://unpkg.com/@ton/core@latest/dist/index.mjs';
-      try {
-        const mod = await import(esmUrl);
-        if (mod && typeof mod.beginCell === 'function') {
-          return { fn: mod.beginCell, source: 'dynamic import index.mjs' };
-        }
-      } catch (e) {
-        console.warn('Dynamic import of @ton/core failed or blocked by CORS:', e);
-      }
-
-      return { fn: null, source: null };
-    }
-
-    // TON Connect UI init
+    // TON Connect UI
     let tonConnectUI;
+    let tonPriceUsd = null;
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
@@ -160,7 +183,7 @@
       console.log('TON Connect UI initialized');
     } catch (err) {
       console.error('TON Connect init failed:', err);
-      alert('Failed to initialize wallet UI. Refresh the page.');
+      alert('Failed to initialize wallet. Refresh the page.');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -221,20 +244,16 @@
     });
 
     // Price fetch
-    let tonPriceUsd = null;
     async function getTonPriceFromCoinGecko() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
           mode: 'cors',
           headers: { 'Accept': 'application/json' }
         });
-        if (!res.ok) throw new Error('price fetch failed');
+        if (!res.ok) throw new Error();
         const data = await res.json();
         return data['the-open-network'].usd;
-      } catch (err) {
-        console.warn('Price fetch error', err);
-        return null;
-      }
+      } catch { return null; }
     }
 
     async function updatePrice() {
@@ -255,7 +274,7 @@
     setInterval(updatePrice, 86400000);
     retryPriceBtn.addEventListener('click', updatePrice);
 
-    // SIGN TRANSACTION with robust beginCell resolution + fallback
+    // SIGN TRANSACTION, with ESM dynamic import for TON core
     signBtn.addEventListener('click', async () => {
       if (!tonConnectUI || !tonConnectUI.wallet) return alert('Connect wallet first.');
       if (!tonPriceUsd) return alert('TON price not loaded. Retry fetch.');
@@ -264,68 +283,52 @@
       const amountInTon = usdAmount / tonPriceUsd;
       const amountNano = Math.floor(amountInTon * 1e9).toString();
 
-      signBtn.textContent = 'Signing...';
-      signBtn.disabled = true;
-
       try {
-        // Try to resolve beginCell implementation (global -> dynamic import)
-        const { fn: beginCellFn, source } = await resolveBeginCell();
-        console.log('beginCell resolution:', { found: !!beginCellFn, source });
+        signBtn.textContent = 'Signing...';
+        signBtn.disabled = true;
 
-        let payloadBase64 = null;
-        if (beginCellFn) {
-          // Build a simple cell with "chat_id:..."
-          const safeChatId = chatId || 'unknown_user';
-          const text = `chat_id:${safeChatId}`;
-          const encoder = new TextEncoder();
-          const bytes = encoder.encode(text);
-
-          // The builder API uses .storeBuffer for raw bytes; some global builds expect Buffer as input.
-          // Provide both: if storeBuffer exists and accepts Uint8Array, it will work.
-          const cell = beginCellFn()
-            .storeUint(0, 32) // prefix kept for compatibility
-            .storeBuffer(bytes)
-            .endCell();
-
-          const boc = cell.toBoc(); // Uint8Array
-          payloadBase64 = uint8ArrayToBase64(boc);
-          console.log('Built payload BOC (base64) length:', payloadBase64.length);
-        } else {
-          // Fallback: beginCell not available. We try to send WITHOUT payload so wallet can sign.
-          // This still lets you test signing and transaction flow. We warn the user and proceed.
-          console.warn('beginCell not found; sending transaction without payload. To include payload: ensure @ton/core is loaded or accessible (check console).');
-          alert('beginCell not found. Will send transaction WITHOUT payload. To include the chat_id payload, ensure the @ton/core ESM or global build is reachable from this page.');
+        // Dynamically import TON core ESM for beginCell etc
+        let tonCore;
+        try {
+          tonCore = await import('https://unpkg.com/@ton/core@latest/dist/index.mjs');
+        } catch (e) {
+          alert("Failed to import TON core ESM: " + e);
+          throw e;
         }
 
-        // Prepare transaction (omit payload if null)
-        const message = {
-          address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
-          amount: amountNano
-        };
-        if (payloadBase64) message.payload = payloadBase64;
+        const safeChatId = chatId || 'unknown_user';
+        // Build payload cell: TON's storeBuffer needs a Uint8Array
+        const cell = tonCore.beginCell()
+          .storeUint(0, 32) // prefix for text comment (optional, matches your original intent)
+          .storeBuffer(new TextEncoder().encode(`chat_id:${safeChatId}`))
+          .endCell();
+
+        // toBoc() returns Uint8Array; convert to base64
+        const boc = cell.toBoc();
+        // Use btoa for base64 (Buffer polyfill not required)
+        const payloadBase64 = btoa(String.fromCharCode(...boc));
 
         const transaction = {
           validUntil: Math.floor(Date.now() / 1000) + 600,
-          messages: [message]
+          messages: [{
+            address: 'UQBP1Ue44jVdu1Zc1sOFzsVnpnOZPFIzfA4eMCvjbpFd50bN',
+            amount: amountNano,
+            payload: payloadBase64
+          }]
         };
 
-        console.log('Prepared transaction for sendTransaction:', transaction);
-
         const result = await tonConnectUI.sendTransaction(transaction);
-        console.log('sendTransaction result:', result);
 
-        // Build webhook payload
         const sender = toUserFriendlyAddress(tonConnectUI.wallet.account.address);
         const webhookPayload = {
           user_id: chatId,
           user: sender,
-          to: message.address,
+          to: transaction.messages[0].address,
           amount: parseInt(amountNano, 10),
           usd: `$${tonPriceUsd.toFixed(2)}`,
-          transactionHash: result?.boc || result?.txHash || null
+          transactionHash: result.boc || result.txHash || null
         };
 
-        // Send to webhook
         const webhookRes = await fetch('https://maxeng-webhook-server.onrender.com/ton-webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -334,7 +337,6 @@
 
         if (!webhookRes.ok) {
           const text = await webhookRes.text().catch(() => '');
-          console.error('Webhook failed:', webhookRes.status, text);
           throw new Error(`Webhook failed: ${webhookRes.status} ${text}`);
         }
 
@@ -347,6 +349,7 @@
         updateSignButton();
       }
     });
+
   </script>
 </body>
 </html>
