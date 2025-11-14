@@ -86,12 +86,6 @@
       z-index: 2;
       position: relative;
     }
-    #connectWalletBtn::before {
-      content: 'Play';
-      margin-right: 10px;
-      font-size: 16px;
-      color: #fff;
-    }
     button:hover {
       background: rgba(255, 255, 255, 0.3);
     }
@@ -218,15 +212,15 @@
             tonCoreLoaded = true;
             resolve();
           } else {
-            reject(new Error('beginCell not found after load'));
+            reject(new Error('beginCell not found'));
           }
         };
-        script.onerror = () => reject(new Error('Failed to load @ton/core'));
+        script.onerror = () => reject(new Error('Network error loading @ton/core'));
         document.head.appendChild(script);
       });
     }
 
-    // Moon animation
+    // Moon animation (unchanged)
     (function() {
       const moon = document.querySelector('.moon-svg');
       const moonContainer = document.getElementById('moon-container');
@@ -280,12 +274,13 @@
 
     let tonConnectUI;
     let tonPriceUsd = null;
+
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json'
       });
     } catch (err) {
-      alert('Failed to initialize wallet connection. Please refresh.');
+      alert('Failed to initialize wallet. Refresh page.');
     }
 
     const connectWalletBtn = document.getElementById('connectWalletBtn');
@@ -298,7 +293,7 @@
     const chatId = urlParams.get('chat_id') || urlParams.get('user_id') || 'anonymous';
 
     if (!chatId || chatId === 'anonymous') {
-      alert('Error: chat_id or user_id not found in URL.');
+      alert('Error: chat_id or user_id missing.');
       signBtn.disabled = true;
     }
 
@@ -334,7 +329,7 @@
         connectWalletBtn.textContent = 'Connecting...';
         await tonConnectUI.connectWallet();
       } catch {
-        alert('Connection failed or cancelled.');
+        alert('Connection failed.');
       } finally {
         connectWalletBtn.textContent = 'Connect Wallet';
       }
@@ -345,6 +340,7 @@
       try { await tonConnectUI.disconnect(); } catch { alert('Disconnect failed.'); }
     });
 
+    // Price fetch
     async function getTonPriceFromCoinGecko() {
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd', {
@@ -385,7 +381,7 @@
           await loadTonCore();
           updateSignButton();
         } catch (err) {
-          alert('Failed to load TON Core: ' + err.message);
+          tonPriceDisplay.textContent = 'Error: TON Core failed to load.';
           return;
         }
       }
@@ -435,7 +431,7 @@
 
         if (!res.ok) throw new Error(`Webhook failed: ${res.status}`);
 
-        alert('Transaction sent and logged successfully!');
+        alert('Transaction sent and logged!');
       } catch (err) {
         alert('Transaction failed: ' + (err.message || err));
       } finally {
@@ -444,7 +440,7 @@
       }
     });
 
-    // AUTO-LOAD TON CORE
+    // AUTO-LOAD TON CORE ON START
     loadTonCore().then(() => {
       updateSignButton();
     }).catch(() => {
